@@ -65,6 +65,24 @@ export default function CyberpunkDashboard() {
     entertainment: ['Netflix', 'Spotify', 'YouTube', 'Steam', 'Twitch']
   });
 
+  // Pomodoro Timer States
+  const [timerMode, setTimerMode] = useState<'work' | 'shortBreak' | 'longBreak' | 'custom'>('work');
+  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [pomodoroSession, setPomodoroSession] = useState(1);
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [customTime, setCustomTime] = useState(25);
+  const [timerPhase, setTimerPhase] = useState<'focus' | 'break' | 'idle'>('idle');
+  const [intensityLevel, setIntensityLevel] = useState<'normal' | 'intense' | 'extreme'>('normal');
+
+  // Timer configurations
+  const timerConfigs = {
+    work: { time: 25 * 60, label: 'FOCUS SESSION', emoji: '🎯', color: '#dc2626' },
+    shortBreak: { time: 5 * 60, label: 'SHORT BREAK', emoji: '☕', color: '#10b981' },
+    longBreak: { time: 15 * 60, label: 'LONG BREAK', emoji: '🌟', color: '#3b82f6' },
+    custom: { time: customTime * 60, label: 'CUSTOM MODE', emoji: '⚡', color: '#8b5cf6' }
+  };
+
   // Load data on mount
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -101,6 +119,53 @@ export default function CyberpunkDashboard() {
       }
     });
   }, [dailyGoals]);
+
+  // Timer Functions (defined before useEffect)
+  const handleTimerComplete = React.useCallback(() => {
+    toast.success('⏰ Timer Complete!', {
+      description: 'Neural sync completed!'
+    });
+
+    // Auto-switch to next phase if enabled
+    if (timerMode === 'work') {
+      setTotalSessions(prev => prev + 1);
+      // Switch to break after work session
+      const nextMode = pomodoroSession % 4 === 0 ? 'longBreak' : 'shortBreak';
+      setPomodoroSession(prev => prev + 1);
+    }
+  }, [timerMode, pomodoroSession]);
+
+  // Pomodoro Timer Effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isTimerRunning && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            // Timer finished
+            setIsTimerRunning(false);
+            handleTimerComplete();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerRunning, timeLeft, handleTimerComplete]);
+
+  // Update timer phase based on mode and state
+  useEffect(() => {
+    if (timerMode === 'work') {
+      setTimerPhase(isTimerRunning ? 'focus' : 'idle');
+    } else {
+      setTimerPhase(isTimerRunning ? 'break' : 'idle');
+    }
+  }, [timerMode, isTimerRunning]);
 
   const sendGoalNotification = (goal: DailyGoal) => {
     const category = categories.find(c => c.value === goal.category);
@@ -271,6 +336,99 @@ export default function CyberpunkDashboard() {
     });
   };
 
+
+  const switchTimerMode = (mode: 'work' | 'shortBreak' | 'longBreak' | 'custom') => {
+    setTimerMode(mode);
+    const config = timerConfigs[mode];
+    setTimeLeft(config.time);
+    setIsTimerRunning(false);
+    
+    toast.info('🔄 Mode Switched!', {
+      description: `Now in ${config.label} mode`
+    });
+  };
+
+  const startTimer = () => {
+    setIsTimerRunning(true);
+    playTimerSound('start');
+    
+    toast.success('▶️ Timer Started!', {
+      description: `${timerConfigs[timerMode].label} mode activated`
+    });
+  };
+
+  const pauseTimer = () => {
+    setIsTimerRunning(false);
+    playTimerSound('pause');
+    
+    toast.info('⏸️ Timer Paused', {
+      description: 'Neural interface suspended'
+    });
+  };
+
+  const resetTimer = () => {
+    setIsTimerRunning(false);
+    setTimeLeft(timerConfigs[timerMode].time);
+    playTimerSound('reset');
+    
+    toast.info('🔄 Timer Reset', {
+      description: 'Neural pathways recalibrated'
+    });
+  };
+
+  const setCustomTimer = (minutes: number) => {
+    setCustomTime(minutes);
+    if (timerMode === 'custom') {
+      setTimeLeft(minutes * 60);
+    }
+  };
+
+  // Sound effects using Web Audio API
+  const playTimerSound = (type: 'start' | 'pause' | 'reset' | 'complete' | 'tick') => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Different frequencies for different actions
+      const frequencies = {
+        start: [440, 554], // A4 to C#5
+        pause: [329, 261], // E4 to C4
+        reset: [523, 440, 349], // C5 to A4 to F4
+        complete: [523, 659, 783, 1046], // C5-E5-G5-C6 (victory chord)
+        tick: [800] // High tick
+      };
+      
+      const freq = frequencies[type];
+      let time = audioContext.currentTime;
+      
+      freq.forEach((f, index) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        
+        osc.frequency.setValueAtTime(f, time);
+        osc.type = 'square'; // Cyberpunk square wave
+        
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.1, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + (type === 'complete' ? 0.5 : 0.1));
+        
+        osc.start(time);
+        osc.stop(time + (type === 'complete' ? 0.5 : 0.1));
+        
+        time += (type === 'complete' ? 0.15 : 0.05);
+      });
+    } catch (error) {
+      console.log('Audio not supported');
+    }
+  };
+
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -280,6 +438,17 @@ export default function CyberpunkDashboard() {
       return `${hours}h ${minutes}m ${secs}s`;
     }
     return `${minutes}m ${secs}s`;
+  };
+
+  const formatTimerTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getTimerProgress = () => {
+    const totalTime = timerConfigs[timerMode].time;
+    return ((totalTime - timeLeft) / totalTime) * 100;
   };
 
   const renderMainContent = () => {
@@ -606,10 +775,290 @@ export default function CyberpunkDashboard() {
         );
       case 'timer':
         return (
-          <div className="flex-1 bg-black text-white cyber-interface p-4">
-            <div className="cyber-panel p-6 text-center">
-              <h2 className="font-mono text-xl font-bold terminal-text mb-4">TIMER MODULE</h2>
-              <p className="font-mono text-gray-400">Temporal tracking interface offline...</p>
+          <div className="flex-1 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-gray-100 cyber-interface overflow-y-auto relative">
+            {/* Animated Background Effects */}
+            <div className="absolute inset-0 pointer-events-none">
+              {/* Pulse effect when timer is running */}
+              {isTimerRunning && (
+                <div className={`absolute inset-0 animate-pulse ${
+                  timerPhase === 'focus' ? 'bg-red-500/5' : 'bg-green-500/5'
+                }`}></div>
+              )}
+              
+              {/* Intensity rings */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`absolute border rounded-full ${
+                      isTimerRunning ? 'animate-ping' : 'opacity-20'
+                    } ${timerPhase === 'focus' ? 'border-red-500/30' : 'border-green-500/30'}`}
+                    style={{
+                      width: `${200 + i * 100}px`,
+                      height: `${200 + i * 100}px`,
+                      left: `${-100 - i * 50}px`,
+                      top: `${-100 - i * 50}px`,
+                      animationDelay: `${i * 0.3}s`,
+                      animationDuration: '3s'
+                    }}
+                  ></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Header */}
+            <div className="border-b-2 border-gray-700 p-6 bg-gradient-to-r from-gray-900 to-gray-800 relative z-10">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <h1 className="font-mono text-xl font-bold terminal-text mb-2">
+                    NEURAL TIMER: &gt;&gt; POMODORO PROTOCOL
+                  </h1>
+                  <p className="font-mono text-sm text-gray-400">
+                    &gt; Temporal focus optimization system active.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className={`font-mono text-sm font-bold ${
+                    timerPhase === 'focus' ? 'status-active' : 
+                    timerPhase === 'break' ? 'status-complete' : 'status-idle'
+                  }`}>
+                    {timerPhase === 'focus' ? '🎯 FOCUS MODE' :
+                     timerPhase === 'break' ? '☕ BREAK MODE' :
+                     '○ STANDBY'}
+                  </div>
+                  <div className="font-mono text-xs text-gray-400 mt-1">
+                    SESSION #{pomodoroSession}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-6 space-y-6 relative z-10">
+              {/* Timer Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="cyber-card p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-blue-400">⏱️</div>
+                    <div className="text-xs font-mono text-gray-400">SESSION</div>
+                  </div>
+                  <div className="data-value text-2xl mb-1">{pomodoroSession}</div>
+                  <div className="text-sm text-gray-400 font-mono">CURRENT</div>
+                </div>
+                
+                <div className="cyber-card p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-green-400">✓</div>
+                    <div className="text-xs font-mono text-gray-400">TOTAL</div>
+                  </div>
+                  <div className="data-value text-2xl mb-1">{totalSessions}</div>
+                  <div className="text-sm text-gray-400 font-mono">COMPLETED</div>
+                </div>
+
+                <div className="cyber-card p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-purple-400">⚡</div>
+                    <div className="text-xs font-mono text-gray-400">MODE</div>
+                  </div>
+                  <div className="data-value text-lg mb-1">{timerConfigs[timerMode].emoji}</div>
+                  <div className="text-xs text-gray-400 font-mono">{timerConfigs[timerMode].label}</div>
+                </div>
+
+                <div className="cyber-card p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-cyan-400">🔥</div>
+                    <div className="text-xs font-mono text-gray-400">INTENSITY</div>
+                  </div>
+                  <div className="data-value text-lg mb-1">{intensityLevel.toUpperCase()}</div>
+                  <div className="text-xs text-gray-400 font-mono">LEVEL</div>
+                </div>
+              </div>
+
+              {/* Main Timer Display */}
+              <div className="cyber-card p-8 text-center relative overflow-hidden">
+                {/* Timer Circle */}
+                <div className="relative mx-auto mb-8" style={{ width: '300px', height: '300px' }}>
+                  {/* Background Circle */}
+                  <svg className="absolute inset-0 transform -rotate-90" width="300" height="300">
+                    <circle
+                      cx="150"
+                      cy="150"
+                      r="140"
+                      fill="none"
+                      stroke="rgba(75, 85, 99, 0.3)"
+                      strokeWidth="8"
+                    />
+                    {/* Progress Circle */}
+                    <circle
+                      cx="150"
+                      cy="150"
+                      r="140"
+                      fill="none"
+                      stroke={timerConfigs[timerMode].color}
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 140}`}
+                      strokeDashoffset={`${2 * Math.PI * 140 * (1 - getTimerProgress() / 100)}`}
+                      className="transition-all duration-1000 ease-linear"
+                      style={{
+                        filter: isTimerRunning ? 'drop-shadow(0 0 20px currentColor)' : 'none'
+                      }}
+                    />
+                  </svg>
+                  
+                  {/* Timer Display */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className={`font-mono text-6xl font-bold mb-4 ${
+                      isTimerRunning ? 'glitch-text' : ''
+                    }`} style={{ color: timerConfigs[timerMode].color }}>
+                      {formatTimerTime(timeLeft)}
+                    </div>
+                    <div className="font-mono text-lg text-gray-400 mb-2">
+                      {timerConfigs[timerMode].label}
+                    </div>
+                    <div className="font-mono text-sm text-gray-500">
+                      {Math.round(getTimerProgress())}% COMPLETE
+                    </div>
+                    
+                    {/* Pulse indicator */}
+                    {isTimerRunning && (
+                      <div className="absolute bottom-8">
+                        <div className="w-4 h-4 rounded-full animate-pulse"
+                             style={{ backgroundColor: timerConfigs[timerMode].color }}>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Timer Controls */}
+                <div className="flex justify-center gap-4 mb-6">
+                  {!isTimerRunning ? (
+                    <button
+                      onClick={startTimer}
+                      className="cyber-button px-8 py-3 text-lg"
+                      style={{ borderColor: timerConfigs[timerMode].color }}
+                    >
+                      <span className="flex items-center gap-2">
+                        ▶️ START NEURAL SYNC
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={pauseTimer}
+                      className="cyber-button px-8 py-3 text-lg border-yellow-500"
+                    >
+                      <span className="flex items-center gap-2">
+                        ⏸️ PAUSE SYNC
+                      </span>
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={resetTimer}
+                    className="cyber-button px-6 py-3 border-gray-500"
+                  >
+                    🔄 RESET
+                  </button>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="text-center">
+                  <div className="font-mono text-sm text-gray-400 mb-3">QUICK ACTIONS</div>
+                  <div className="flex justify-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => setIntensityLevel(
+                        intensityLevel === 'normal' ? 'intense' : 
+                        intensityLevel === 'intense' ? 'extreme' : 'normal'
+                      )}
+                      className="cyber-button px-4 py-2 text-xs"
+                    >
+                      🔥 INTENSITY: {intensityLevel.toUpperCase()}
+                    </button>
+                    
+                    <button
+                      onClick={() => playTimerSound('tick')}
+                      className="cyber-button px-4 py-2 text-xs"
+                    >
+                      🔊 TEST SOUND
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timer Mode Selector */}
+              <div className="cyber-card p-6">
+                <h3 className="font-mono text-lg font-bold text-gray-200 mb-4">MODE SELECTION</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  {(Object.keys(timerConfigs) as Array<keyof typeof timerConfigs>).map(mode => {
+                    const config = timerConfigs[mode];
+                    const isActive = timerMode === mode;
+                    
+                    return (
+                      <button
+                        key={mode}
+                        onClick={() => switchTimerMode(mode)}
+                        disabled={isTimerRunning}
+                        className={`cyber-button p-4 text-center ${
+                          isActive ? 'active' : ''
+                        } ${isTimerRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        style={{
+                          borderColor: isActive ? config.color : undefined
+                        }}
+                      >
+                        <div className="text-2xl mb-2">{config.emoji}</div>
+                        <div className="font-mono text-sm font-bold">{config.label}</div>
+                        <div className="font-mono text-xs text-gray-400 mt-1">
+                          {mode === 'custom' ? `${customTime}m` : `${config.time / 60}m`}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Timer Settings */}
+                {timerMode === 'custom' && (
+                  <div className="border-t border-gray-700 pt-4">
+                    <div className="flex items-center gap-4">
+                      <span className="font-mono text-sm text-gray-400">CUSTOM TIME:</span>
+                      <input
+                        type="range"
+                        min="1"
+                        max="120"
+                        value={customTime}
+                        onChange={(e) => setCustomTimer(parseInt(e.target.value))}
+                        disabled={isTimerRunning}
+                        className="flex-1"
+                      />
+                      <span className="font-mono text-sm text-gray-200 min-w-[60px]">
+                        {customTime}m
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Status Bar */}
+            <div className="border-t-2 border-gray-700 bg-gradient-to-r from-gray-900 to-gray-800 p-4 relative z-10">
+              <div className="flex justify-between items-center">
+                <div className="font-mono text-sm terminal-text">
+                  TIMER MODULE - NEURAL SYNC v2.1.0
+                </div>
+                <div className="flex space-x-6">
+                  <div className="font-mono text-sm flex items-center gap-2">
+                    <span className={`w-2 h-2 ${isTimerRunning ? 'bg-red-500 animate-pulse' : 'bg-gray-500'} rounded-full`}></span>
+                    <span className={isTimerRunning ? 'text-red-400' : 'text-gray-400'}>
+                      SYNC: {isTimerRunning ? 'ACTIVE' : 'STANDBY'}
+                    </span>
+                  </div>
+                  <div className="font-mono text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span className="text-blue-400">SESSIONS: {totalSessions}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
