@@ -1,0 +1,10 @@
+# Screenshots Directory
+
+This directory will contain the application screenshots referenced in the README.md file.
+
+Expected screenshots:
+- dashboard.png - Main dashboard overview
+- habit-tracking.png - Habit tracking interface
+- analytics.png - Analytics and reports view
+- goals.png - Goal management interface
+- settings.png - Settings and customization page

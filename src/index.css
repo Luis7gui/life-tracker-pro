@@ -1,0 +1,914 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+@import './styles/apple-modern.css';
+
+/* STATIC CYBERPUNK DESIGN SYSTEM */
+
+/* Cyberpunk Typography Classes */
+.cyber-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #00ffff;
+  text-shadow: 
+    0 0 10px rgba(0, 255, 255, 0.8),
+    0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.cyber-subtitle {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.cyber-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #8080ff;
+}
+
+.cyber-value {
+  font-family: 'Orbitron', monospace;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.cyber-status-active {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #00ff41;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.7);
+}
+
+.cyber-status-inactive {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+}
+
+/* OVERLOAD AESTHETIC CLASSES - DARK CYBERPUNK */
+.overload-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--overload-lime);
+  text-shadow: 
+    0 0 3px rgba(204, 255, 0, 0.3),
+    1px 1px 0px rgba(139, 63, 255, 0.2);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.overload-title:hover {
+  text-shadow: 
+    0 0 5px rgba(204, 255, 0, 0.4),
+    0 0 10px rgba(204, 255, 0, 0.2),
+    1px 1px 0px rgba(139, 63, 255, 0.3);
+  transform: scale(1.01);
+}
+
+.overload-subtitle {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--overload-cyan);
+  text-shadow: 
+    0 0 2px rgba(0, 255, 170, 0.2),
+    1px 1px 0px rgba(139, 63, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.overload-subtitle:hover {
+  color: var(--overload-lime);
+  text-shadow: 
+    0 0 3px rgba(204, 255, 0, 0.3),
+    1px 1px 0px rgba(139, 63, 255, 0.2);
+}
+
+.overload-accent {
+  color: var(--overload-purple);
+  text-shadow: 0 0 2px rgba(139, 63, 255, 0.2);
+}
+
+.overload-lime-text {
+  color: var(--overload-lime);
+  text-shadow: 0 0 2px rgba(204, 255, 0, 0.2);
+}
+
+.overload-drip-effect {
+  position: relative;
+}
+
+.overload-drip-effect::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--overload-lime) 20%, 
+    var(--overload-cyan) 40%,
+    var(--overload-purple) 60%,
+    var(--overload-lime) 80%,
+    transparent 100%);
+  opacity: 0.6;
+}
+
+/* Enhanced Wireframe Grid Background */
+.overload-grid-bg {
+  background-image: 
+    linear-gradient(rgba(204, 255, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(204, 255, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(rgba(0, 255, 170, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 170, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 40px 40px, 40px 40px;
+  background-position: 0 0, 0 0, 10px 10px, 10px 10px;
+  animation: grid-shift 10s linear infinite;
+}
+
+@keyframes grid-shift {
+  0% {
+    background-position: 0 0, 0 0, 10px 10px, 10px 10px;
+  }
+  100% {
+    background-position: 20px 20px, 20px 20px, 30px 30px, 30px 30px;
+  }
+}
+
+/* Dark Cyberpunk Card Style */
+.overload-card {
+  background: linear-gradient(135deg, 
+    rgba(16, 16, 20, 0.98) 0%, 
+    rgba(24, 24, 32, 0.95) 50%,
+    rgba(16, 16, 20, 0.98) 100%
+  );
+  border: 1px solid rgba(204, 255, 0, 0.2);
+  box-shadow: 
+    0 0 5px rgba(204, 255, 0, 0.05),
+    inset 0 1px 0 rgba(204, 255, 0, 0.05);
+  position: relative;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.overload-card:hover {
+  border-color: rgba(204, 255, 0, 0.3);
+  box-shadow: 
+    0 0 8px rgba(204, 255, 0, 0.08),
+    inset 0 1px 0 rgba(204, 255, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.overload-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: linear-gradient(135deg, 
+    var(--overload-lime), 
+    var(--overload-cyan), 
+    var(--overload-purple), 
+    var(--overload-pink)
+  );
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Dark OVERLOAD Smiley Face */
+.overload-smiley {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: 2px solid rgba(204, 255, 0, 0.3);
+  border-radius: 50%;
+  background: rgba(204, 255, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--overload-lime);
+  text-shadow: 0 0 2px rgba(204, 255, 0, 0.2);
+  box-shadow: 0 0 3px rgba(204, 255, 0, 0.1);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.overload-smiley:hover {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 0 5px rgba(204, 255, 0, 0.15);
+  border-color: rgba(0, 255, 170, 0.4);
+}
+
+.overload-smiley.scale-50 {
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+  border-width: 2px;
+}
+
+.overload-smiley.scale-75 {
+  width: 45px;
+  height: 45px;
+  font-size: 1.5rem;
+  border-width: 2px;
+}
+
+.overload-smiley::before {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 1px solid rgba(139, 63, 255, 0.15);
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+.overload-smiley::after {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border: 1px solid rgba(0, 255, 170, 0.1);
+  border-radius: 50%;
+  opacity: 0.2;
+}
+
+/* Enhanced Vertical Text */
+.overload-vertical-text {
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--overload-purple);
+  text-shadow: 0 0 8px rgba(139, 63, 255, 0.7);
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.overload-vertical-text:hover {
+  color: var(--overload-lime);
+  text-shadow: 0 0 12px rgba(204, 255, 0, 0.9);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Enhanced Chain/Connection Graphics */
+.overload-connection {
+  background: linear-gradient(45deg, 
+    var(--overload-lime) 0%,
+    var(--overload-cyan) 25%,
+    var(--overload-purple) 50%,
+    var(--overload-pink) 75%,
+    var(--overload-lime) 100%
+  );
+  height: 2px;
+  position: relative;
+  opacity: 0.7;
+  animation: connection-flow 3s linear infinite;
+  box-shadow: 0 0 6px rgba(204, 255, 0, 0.5);
+}
+
+@keyframes connection-flow {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+.overload-connection:hover {
+  opacity: 1;
+  height: 3px;
+  box-shadow: 0 0 10px rgba(204, 255, 0, 0.8);
+}
+
+.overload-connection::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--overload-lime);
+  border-radius: 50%;
+  background: rgba(204, 255, 0, 0.3);
+}
+
+.overload-connection::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--overload-cyan);
+  border-radius: 50%;
+  background: rgba(0, 255, 170, 0.3);
+}
+
+/* Enhanced OVERLOAD Header Banner */
+.overload-header-banner {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(204, 255, 0, 0.1) 20%,
+    rgba(0, 255, 170, 0.15) 40%,
+    rgba(139, 63, 255, 0.1) 60%,
+    rgba(255, 0, 128, 0.1) 80%,
+    transparent 100%
+  );
+  border-top: 1px solid rgba(204, 255, 0, 0.3);
+  border-bottom: 1px solid rgba(204, 255, 0, 0.3);
+  position: relative;
+  animation: banner-flow 4s linear infinite;
+  box-shadow: 
+    0 0 10px rgba(204, 255, 0, 0.2),
+    inset 0 0 10px rgba(0, 255, 170, 0.1);
+}
+
+@keyframes banner-flow {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.overload-header-banner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(204, 255, 0, 0.05) 50%,
+    transparent 100%
+  );
+  animation: banner-sweep 2s ease-in-out infinite alternate;
+}
+
+@keyframes banner-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Digital Decay Effect */
+.overload-glitch-container {
+  position: relative;
+  display: inline-block;
+}
+
+.overload-glitch-container::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 2px;
+  color: var(--overload-pink);
+  opacity: 0.7;
+  z-index: -1;
+  animation: glitch-offset-1 0.6s linear infinite alternate;
+}
+
+.overload-glitch-container::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: -2px;
+  color: var(--overload-cyan);
+  opacity: 0.7;
+  z-index: -2;
+  animation: glitch-offset-2 0.8s linear infinite alternate-reverse;
+}
+
+@keyframes glitch-offset-1 {
+  0%, 14% { transform: translate(0); }
+  15%, 49% { transform: translate(-2px, 1px); }
+  50%, 84% { transform: translate(1px, -1px); }
+  85%, 100% { transform: translate(0); }
+}
+
+@keyframes glitch-offset-2 {
+  0%, 19% { transform: translate(0); }
+  20%, 39% { transform: translate(2px, -1px); }
+  40%, 79% { transform: translate(-1px, 1px); }
+  80%, 100% { transform: translate(0); }
+}
+
+/* OVERLOAD Animated Background Grid */
+.overload-scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.overload-scanlines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(204, 255, 0, 0.03),
+    transparent
+  );
+  animation: scan-sweep 4s linear infinite;
+}
+
+@keyframes scan-sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* OVERLOAD Pulse Effect for Active Elements */
+.overload-pulse {
+  animation: overload-pulse-animation 2s ease-in-out infinite;
+}
+
+@keyframes overload-pulse-animation {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(204, 255, 0, 0.4),
+      0 0 40px rgba(204, 255, 0, 0.2),
+      inset 0 0 20px rgba(204, 255, 0, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(204, 255, 0, 0.6),
+      0 0 60px rgba(204, 255, 0, 0.3),
+      inset 0 0 30px rgba(204, 255, 0, 0.2);
+  }
+}
+
+/* OVERLOAD Data Stream Effect */
+.overload-data-stream {
+  position: relative;
+  overflow: hidden;
+}
+
+.overload-data-stream::after {
+  content: '01110100 01100001 01110010 01100111 01100101 01110100';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: rgba(204, 255, 0, 0.3);
+  white-space: nowrap;
+  animation: data-flow 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes data-flow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* EARTHEN Retro Terminal Color Palette */
+:root {
+  /* EARTHEN Primary Colors - Inspired by 80s terminals */
+  --overload-lime: #cc8844;
+  --overload-purple: #b8860b;
+  --overload-cyan: #cd853f;
+  --overload-pink: #daa520;
+  --overload-yellow: #a0522d;
+  --overload-dark: #0d0d0a;
+  
+  /* Legacy Cyber Colors (updated to earthen tones) */
+  --cyber-pink: #daa520;
+  --cyber-cyan: #cd853f;
+  --cyber-purple: #b8860b;
+  --cyber-green: #cc8844;
+  --cyber-yellow: #daa520;
+  --cyber-orange: #a0522d;
+  
+  /* EARTHEN Darker Backgrounds */
+  --cyber-bg-primary: #0a0a08;
+  --cyber-bg-secondary: #1a1612;
+  --cyber-bg-tertiary: #2a1f18;
+  
+  /* EARTHEN Subtle Borders */
+  --cyber-border-lime: rgba(204, 136, 68, 0.3);
+  --cyber-border-purple: rgba(184, 134, 11, 0.3);
+  --cyber-border-cyan: rgba(205, 133, 63, 0.3);
+  --cyber-border-pink: rgba(218, 165, 32, 0.3);
+}
+
+/* Cyberpunk UI Classes */
+.cyber-card {
+  background: linear-gradient(135deg, 
+    rgba(26, 11, 46, 0.9) 0%, 
+    rgba(22, 33, 62, 0.8) 50%,
+    rgba(10, 10, 15, 0.95) 100%
+  );
+  border: 1px solid var(--cyber-border-cyan);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.3),
+    inset 0 1px 0 rgba(0, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00ffff, transparent);
+  animation: scan-lines 3s linear infinite;
+}
+
+.cyber-glow-pink {
+  animation: cyber-pulse 2s ease-in-out infinite;
+}
+
+.cyber-text-glitch {
+  position: relative;
+  color: #00ffff;
+  animation: neon-flicker 3s linear infinite;
+}
+
+.cyber-text-glitch::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #ff0080;
+  z-index: -1;
+  animation: glitch-1 0.3s linear infinite;
+}
+
+.cyber-text-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #00ff41;
+  z-index: -2;
+  animation: glitch-2 0.3s linear infinite reverse;
+}
+
+.cyber-button {
+  background: linear-gradient(45deg, #ff0080, #8b00ff);
+  border: 1px solid #ff0080;
+  box-shadow: 
+    0 0 10px rgba(255, 0, 128, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.cyber-button:hover {
+  box-shadow: 
+    0 0 20px rgba(255, 0, 128, 0.8),
+    0 0 30px rgba(255, 0, 128, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Custom animations for Life Tracker Pro */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Apply custom animations */
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+
+/* Smooth transitions for interactive elements */
+.interactive-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Loading pulse animation */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Gradient text animation */
+.gradient-text {
+  background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981);
+  background-size: 400% 400%;
+  animation: gradient-shift 3s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Focus styles for accessibility */
+.focus-ring:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+/* Responsive text sizing */
+@media (max-width: 640px) {
+  .responsive-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+@media (min-width: 641px) {
+  .responsive-text {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* EARTHEN Retro Theme Variables (Updated) */
+:root {
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  /* Earthen Dark Theme */
+  --background: #0d0d0a;
+  --foreground: #d4c4a0;
+  --card: var(--cyber-bg-secondary);
+  --card-foreground: #d4c4a0;
+  --primary: var(--cyber-green);
+  --primary-foreground: #0d0d0a;
+  --secondary: var(--cyber-bg-tertiary);
+  --secondary-foreground: #d4c4a0;
+  --muted: var(--cyber-bg-tertiary);
+  --muted-foreground: #a68b5b;
+  --accent: var(--cyber-purple);
+  --destructive: #cd5c5c;
+  --border: var(--cyber-border-cyan);
+  --ring: var(--cyber-cyan);
+  
+  /* Earthen Chart Colors */
+  --chart-1: var(--cyber-green);
+  --chart-2: var(--cyber-cyan);
+  --chart-3: var(--cyber-purple);
+  --chart-4: var(--cyber-pink);
+  --chart-5: var(--cyber-orange);
+  
+  /* Earthen Gradients */
+  --gradient-cyber-main: linear-gradient(135deg, #cc8844 0%, #b8860b 50%, #cd853f 100%);
+  --gradient-cyber-energy: linear-gradient(45deg, #daa520 0%, #cc8844 100%);
+  --gradient-cyber-fire: linear-gradient(45deg, #cd853f 0%, #a0522d 100%);
+  --gradient-cyber-ice: linear-gradient(45deg, #cc8844 0%, #b8860b 100%);
+}
+
+/* STATIC CYBERPUNK Card Styles */
+.mystic-card {
+  position: relative;
+  background: linear-gradient(135deg, 
+    rgba(10, 10, 15, 0.95) 0%, 
+    rgba(15, 15, 25, 0.9) 50%,
+    rgba(10, 10, 15, 0.95) 100%
+  );
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.1),
+    inset 0 1px 0 rgba(0, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Static border accent */
+.mystic-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: linear-gradient(135deg, 
+    rgba(0, 255, 255, 0.4), 
+    rgba(255, 0, 128, 0.2), 
+    rgba(139, 0, 255, 0.3), 
+    rgba(0, 255, 65, 0.2)
+  );
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* Glowing effect for active elements */
+.glow-effect {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(157, 78, 221, 0.5), 0 0 10px rgba(157, 78, 221, 0.3);
+  }
+  to {
+    box-shadow: 0 0 10px rgba(157, 78, 221, 0.8), 0 0 20px rgba(157, 78, 221, 0.5);
+  }
+}
+
+/* Tarot Symbol Classes */
+.tarot-symbol {
+  display: inline-block;
+  font-size: 1.2em;
+  background: var(--gradient-mystic);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 3px rgba(157, 78, 221, 0.5));
+}
+
+/* Mystical Border Animation */
+.mystic-border {
+  position: relative;
+  overflow: hidden;
+}
+
+.mystic-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #9d4edd, transparent);
+  animation: sweep 3s linear infinite;
+}
+
+@keyframes sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* ASCII Art Container */
+.ascii-art {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1;
+  color: rgba(157, 78, 221, 0.6);
+  white-space: pre;
+  text-align: center;
+}
+
+/* EARTHEN Retro Terminal Body styling */
+body {
+  font-family: var(--font-mono);
+  background-color: var(--background);
+  color: var(--foreground);
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(204, 136, 68, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(184, 134, 11, 0.02) 0%, transparent 40%),
+    radial-gradient(circle at 50% 10%, rgba(205, 133, 63, 0.015) 0%, transparent 30%),
+    radial-gradient(circle at 10% 90%, rgba(218, 165, 32, 0.02) 0%, transparent 35%),
+    linear-gradient(0deg, transparent 24%, rgba(204, 136, 68, 0.008) 25%, rgba(204, 136, 68, 0.008) 26%, transparent 27%, transparent 74%, rgba(204, 136, 68, 0.008) 75%, rgba(204, 136, 68, 0.008) 76%, transparent 77%, transparent),
+    linear-gradient(90deg, transparent 24%, rgba(205, 133, 63, 0.008) 25%, rgba(205, 133, 63, 0.008) 26%, transparent 27%, transparent 74%, rgba(205, 133, 63, 0.008) 75%, rgba(205, 133, 63, 0.008) 76%, transparent 77%, transparent);
+  background-size: 800px 800px, 600px 600px, 400px 400px, 500px 500px, 50px 50px, 50px 50px;
+  background-position: 0 0, 200px 200px, 100px 400px, 500px 100px, 0 0, 0 0;
+  animation: earthen-bg-shift 20s ease infinite;
+}
+
+@keyframes earthen-bg-shift {
+  0%, 100% {
+    background-position: 0 0, 200px 200px, 100px 400px, 500px 100px, 0 0, 0 0;
+  }
+  50% {
+    background-position: 100px 100px, 300px 300px, 200px 300px, 400px 200px, 5px 5px, 5px 5px;
+  }
+}
+
+/* OVERLOAD Terminal Cursor Effect */
+.overload-cursor::after {
+  content: '▋';
+  color: var(--overload-lime);
+  animation: cursor-blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}

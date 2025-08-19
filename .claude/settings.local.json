@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rmdir:*)",
+      "Bash(npm test)",
+      "Bash(npm run dev:*)"
+    ],
+    "deny": [],
+    "defaultMode": "acceptEdits"
+  }
+}
