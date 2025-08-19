@@ -52,6 +52,19 @@ export default function CyberpunkDashboard() {
     }))
   );
 
+  // Edit mode states for goals
+  const [editingGoals, setEditingGoals] = useState<{[key: string]: number}>({});
+  const [editingApps, setEditingApps] = useState<{[key: string]: string[]}>({});
+  
+  // Apps associated with each category
+  const [categoryApps, setCategoryApps] = useState<{[key: string]: string[]}>({
+    work: ['Visual Studio Code', 'Slack', 'Microsoft Teams', 'Notion', 'Figma'],
+    study: ['Coursera', 'Khan Academy', 'Duolingo', 'Udemy', 'YouTube'],
+    exercise: ['Strava', 'Nike Run Club', 'MyFitnessPal', 'Fitbit', 'Apple Health'],
+    personal: ['WhatsApp', 'Instagram', 'Facebook', 'Twitter', 'TikTok'],
+    entertainment: ['Netflix', 'Spotify', 'YouTube', 'Steam', 'Twitch']
+  });
+
   // Load data on mount
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -188,6 +201,76 @@ export default function CyberpunkDashboard() {
     }
   };
 
+  const updateGoal = (category: string, newTarget: number) => {
+    if (newTarget < 0 || newTarget > 720) return; // Max 12 hours
+    
+    setDailyGoals(prev => 
+      prev.map(goal => 
+        goal.category === category 
+          ? { ...goal, targetMinutes: newTarget, completed: goal.currentMinutes >= newTarget }
+          : goal
+      )
+    );
+    
+    toast.success('🎯 Meta Atualizada!', {
+      description: `${categories.find(c => c.value === category)?.label}: ${newTarget} minutos`
+    });
+  };
+
+  const handleGoalEdit = (category: string, value: string) => {
+    const numValue = parseInt(value) || 0;
+    setEditingGoals(prev => ({ ...prev, [category]: numValue }));
+  };
+
+  const saveGoal = (category: string) => {
+    const newValue = editingGoals[category];
+    if (newValue !== undefined && newValue >= 0 && newValue <= 720) {
+      updateGoal(category, newValue);
+      setEditingGoals(prev => {
+        const updated = { ...prev };
+        delete updated[category];
+        return updated;
+      });
+    }
+  };
+
+  const addApp = (category: string, appName: string) => {
+    if (appName.trim() && !categoryApps[category]?.includes(appName.trim())) {
+      setCategoryApps(prev => ({
+        ...prev,
+        [category]: [...(prev[category] || []), appName.trim()]
+      }));
+      toast.success('📱 App Adicionado!', {
+        description: `${appName} → ${categories.find(c => c.value === category)?.label}`
+      });
+    }
+  };
+
+  const removeApp = (category: string, appName: string) => {
+    setCategoryApps(prev => ({
+      ...prev,
+      [category]: prev[category]?.filter(app => app !== appName) || []
+    }));
+    toast.success('🗑️ App Removido!', {
+      description: `${appName} removido da categoria`
+    });
+  };
+
+  const resetGoals = () => {
+    setDailyGoals(
+      categories.map(cat => ({
+        category: cat.value,
+        targetMinutes: cat.targetMinutes,
+        currentMinutes: Math.floor(Math.random() * cat.targetMinutes),
+        completed: false
+      }))
+    );
+    setEditingGoals({});
+    toast.success('🔄 Metas Resetadas!', {
+      description: 'Todas as metas voltaram aos valores padrão'
+    });
+  };
+
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -215,10 +298,309 @@ export default function CyberpunkDashboard() {
         );
       case 'goals':
         return (
-          <div className="flex-1 bg-black text-white cyber-interface p-4">
-            <div className="cyber-panel p-6 text-center">
-              <h2 className="font-mono text-xl font-bold terminal-text mb-4">GOAL SYSTEM</h2>
-              <p className="font-mono text-gray-400">Neural pathway optimization in progress...</p>
+          <div className="flex-1 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-gray-100 cyber-interface overflow-y-auto">
+            {/* Header */}
+            <div className="border-b-2 border-gray-700 p-6 bg-gradient-to-r from-gray-900 to-gray-800">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <h1 className="font-mono text-xl font-bold terminal-text mb-2">
+                    GOAL SYSTEM: &gt;&gt; NEURAL PATHWAY OPTIMIZATION
+                  </h1>
+                  <p className="font-mono text-sm text-gray-400">
+                    &gt; Configure daily targets and application mapping protocols.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <button 
+                    onClick={resetGoals}
+                    className="cyber-button text-xs"
+                  >
+                    <span className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                      RESET TARGETS
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-6 space-y-6">
+              {/* Goals Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 text-blue-400">🎯</div>
+                    <div className="text-xs font-mono text-gray-400">TARGETS</div>
+                  </div>
+                  <div className="data-value text-3xl mb-1">{dailyGoals.length}</div>
+                  <div className="text-sm text-gray-400 font-mono">CATEGORIES</div>
+                </div>
+                
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 text-green-400">✓</div>
+                    <div className="text-xs font-mono text-gray-400">COMPLETE</div>
+                  </div>
+                  <div className="data-value text-3xl mb-1 text-green-400">
+                    {dailyGoals.filter(g => g.completed).length}
+                  </div>
+                  <div className="text-sm text-gray-400 font-mono">ACHIEVED</div>
+                </div>
+
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 text-cyan-400">📱</div>
+                    <div className="text-xs font-mono text-gray-400">APPS</div>
+                  </div>
+                  <div className="data-value text-3xl mb-1 text-cyan-400">
+                    {Object.values(categoryApps).flat().length}
+                  </div>
+                  <div className="text-sm text-gray-400 font-mono">MAPPED</div>
+                </div>
+              </div>
+
+              {/* Goals Configuration */}
+              <div className="space-y-4">
+                <h2 className="font-mono text-lg font-bold text-gray-200 mb-4">TARGET CONFIGURATION</h2>
+                
+                {dailyGoals.map(goal => {
+                  const category = categories.find(c => c.value === goal.category);
+                  const isEditingGoal = editingGoals[goal.category] !== undefined;
+                  const isEditingApp = editingApps[goal.category] !== undefined;
+                  const progress = Math.min((goal.currentMinutes / goal.targetMinutes) * 100, 100);
+                  
+                  return (
+                    <div key={goal.category} className="cyber-card p-6 scanlines">
+                      {/* Goal Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                          <div 
+                            className="w-12 h-12 border-2 border-gray-600 flex items-center justify-center rounded-sm"
+                            style={{ backgroundColor: category?.color + '20', borderColor: category?.color }}
+                          >
+                            <span className="text-2xl">
+                              {goal.category === 'work' ? '💼' :
+                               goal.category === 'study' ? '📚' :
+                               goal.category === 'exercise' ? '💪' :
+                               goal.category === 'personal' ? '👤' :
+                               '🎮'}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-mono font-bold text-lg text-gray-200">
+                              {category?.label.toUpperCase()}
+                            </div>
+                            <div className={`text-sm font-mono font-bold ${
+                              goal.completed ? 'status-complete' : 'status-idle'
+                            }`}>
+                              {goal.completed ? '✓ TARGET ACHIEVED' : '○ IN PROGRESS'}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="text-right">
+                          <div className="data-value text-xl text-gray-200">
+                            {Math.floor(goal.currentMinutes / 60)}h {goal.currentMinutes % 60}m
+                          </div>
+                          <div className="text-sm text-gray-400 font-mono">
+                            of {Math.floor(goal.targetMinutes / 60)}h {goal.targetMinutes % 60}m
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="status-bar">
+                          <div 
+                            className="status-fill" 
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                          <div className="text-sm text-gray-400 font-mono">
+                            {Math.round(progress)}% of daily target
+                          </div>
+                          {goal.completed && (
+                            <div className="text-sm font-mono font-bold text-green-400">
+                              NEURAL PATHWAY OPTIMIZED!
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Goal Time Editor */}
+                      <div className="mb-4 p-4 bg-gray-900 border border-gray-700 rounded">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="font-mono text-sm font-bold text-cyan-400">TIME TARGET</div>
+                          {!isEditingGoal && (
+                            <button
+                              onClick={() => setEditingGoals(prev => ({ 
+                                ...prev, 
+                                [goal.category]: goal.targetMinutes 
+                              }))}
+                              className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 font-mono"
+                            >
+                              EDIT
+                            </button>
+                          )}
+                        </div>
+                        
+                        {isEditingGoal ? (
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="number"
+                              min="0"
+                              max="720"
+                              value={editingGoals[goal.category]}
+                              onChange={(e) => handleGoalEdit(goal.category, e.target.value)}
+                              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white font-mono"
+                              placeholder="Minutes per day"
+                            />
+                            <span className="text-sm text-gray-400 font-mono">MIN/DAY</span>
+                            <button
+                              onClick={() => saveGoal(goal.category)}
+                              className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-500 font-mono text-xs"
+                            >
+                              ✓ SAVE
+                            </button>
+                            <button
+                              onClick={() => setEditingGoals(prev => {
+                                const updated = { ...prev };
+                                delete updated[goal.category];
+                                return updated;
+                              })}
+                              className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-500 font-mono text-xs"
+                            >
+                              ✕ CANCEL
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="font-mono text-lg text-gray-200">
+                            {goal.targetMinutes} minutes/day ({Math.floor(goal.targetMinutes/60)}h {goal.targetMinutes%60}m)
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Apps Manager */}
+                      <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="font-mono text-sm font-bold text-cyan-400">MAPPED APPLICATIONS</div>
+                          <div className="font-mono text-xs text-gray-400">
+                            {categoryApps[goal.category]?.length || 0} APPS
+                          </div>
+                        </div>
+                        
+                        {/* App List */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {categoryApps[goal.category]?.map((app, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 px-3 py-1 bg-gray-800 border border-gray-600 rounded font-mono text-xs"
+                            >
+                              <span className="text-gray-200">{app}</span>
+                              <button
+                                onClick={() => removeApp(goal.category, app)}
+                                className="text-red-400 hover:text-red-300 ml-1"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          )) || (
+                            <div className="text-gray-500 font-mono text-sm italic">
+                              No applications mapped yet
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Add App */}
+                        {isEditingApp ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editingApps[goal.category]?.[0] || ''}
+                              onChange={(e) => setEditingApps(prev => ({
+                                ...prev,
+                                [goal.category]: [e.target.value]
+                              }))}
+                              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white font-mono text-sm"
+                              placeholder="Application name"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  const appName = editingApps[goal.category]?.[0];
+                                  if (appName) {
+                                    addApp(goal.category, appName);
+                                    setEditingApps(prev => {
+                                      const updated = { ...prev };
+                                      delete updated[goal.category];
+                                      return updated;
+                                    });
+                                  }
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                const appName = editingApps[goal.category]?.[0];
+                                if (appName) {
+                                  addApp(goal.category, appName);
+                                  setEditingApps(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[goal.category];
+                                    return updated;
+                                  });
+                                }
+                              }}
+                              className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-500 font-mono text-xs"
+                            >
+                              + ADD
+                            </button>
+                            <button
+                              onClick={() => setEditingApps(prev => {
+                                const updated = { ...prev };
+                                delete updated[goal.category];
+                                return updated;
+                              })}
+                              className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 font-mono text-xs"
+                            >
+                              CANCEL
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setEditingApps(prev => ({
+                              ...prev,
+                              [goal.category]: ['']
+                            }))}
+                            className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 font-mono text-xs"
+                          >
+                            + ADD APPLICATION
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottom Status Bar */}
+            <div className="border-t-2 border-gray-700 bg-gradient-to-r from-gray-900 to-gray-800 p-4">
+              <div className="flex justify-between items-center">
+                <div className="font-mono text-sm terminal-text">
+                  GOAL MODULE - NEURAL OPTIMIZATION v2.1.0
+                </div>
+                <div className="flex space-x-6">
+                  <div className="font-mono text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span className="text-green-400">TARGETS: {dailyGoals.filter(g => g.completed).length}/{dailyGoals.length}</span>
+                  </div>
+                  <div className="font-mono text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span className="text-blue-400">APPS: {Object.values(categoryApps).flat().length}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
