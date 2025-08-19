@@ -5,22 +5,23 @@
 
 import React from 'react';
 import { Toaster } from 'sonner';
-import SimpleDashboard from './pages/dashboard/SimpleDashboard';
+import CyberpunkDashboard from './pages/dashboard/CyberpunkDashboard';
 
-// Main App Component with Simple Dashboard and Notifications
+// Main App Component with Cyberpunk Dashboard and Notifications
 const App: React.FC = () => {
   return (
     <>
-      <SimpleDashboard />
+      <CyberpunkDashboard />
       <Toaster 
         position="top-right" 
         toastOptions={{
           style: {
-            background: '#1f2937',
-            color: '#ffffff',
-            border: '2px solid #dc2626',
-            fontFamily: 'monospace',
+            background: '#1a1612',
+            color: '#d4c4a0',
+            border: '2px solid #cd853f',
+            fontFamily: 'Courier New, monospace',
             fontWeight: 'bold',
+            borderRadius: '4px',
           },
         }}
       />
