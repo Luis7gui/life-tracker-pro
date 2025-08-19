@@ -36,6 +36,11 @@ export default function CyberpunkDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [isTracking, setIsTracking] = useState(false);
   const [sessionDuration, setSessionDuration] = useState(0);
+  const [notificationPermission, setNotificationPermission] = useState(
+    typeof window !== 'undefined' && 'Notification' in window 
+      ? Notification.permission 
+      : 'default'
+  );
 
   // Daily Goals (can be customized later)
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(
@@ -117,7 +122,7 @@ export default function CyberpunkDashboard() {
 
   const handleStopTracking = async () => {
     try {
-      const result = await dispatch(stopTracking()).unwrap();
+      await dispatch(stopTracking()).unwrap();
       setIsTracking(false);
       
       const duration = Math.floor(sessionDuration / 60);
@@ -141,6 +146,45 @@ export default function CyberpunkDashboard() {
       
     } catch (error: any) {
       showErrorToast('Erro ao Parar', handleApiError(error));
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === 'granted') {
+        toast.success('🔔 Notificações Ativadas!', {
+          description: 'Sistema de alertas neural online!'
+        });
+      } else {
+        toast.error('❌ Acesso Negado', {
+          description: 'Permissão de notificação requerida para alertas do sistema.'
+        });
+      }
+    } else {
+      toast.error('⚠️ Incompatível', {
+        description: 'Este navegador não suporta notificações.'
+      });
+    }
+  };
+
+  const testNotification = () => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('🤖 TESTE DO SISTEMA NEURAL', {
+        body: 'Interface cyberpunk operacional. Todos os sistemas funcionando.',
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: 'test-notification'
+      });
+      toast.success('📡 Teste Enviado!', {
+        description: 'Verificação de sistema neural transmitida.'
+      });
+    } else {
+      toast.warning('🔒 Acesso Requerido', {
+        description: 'Ative as notificações primeiro para testar o sistema.'
+      });
     }
   };
 
@@ -198,10 +242,158 @@ export default function CyberpunkDashboard() {
         );
       case 'config':
         return (
-          <div className="flex-1 bg-black text-white cyber-interface p-4">
-            <div className="cyber-panel p-6 text-center">
-              <h2 className="font-mono text-xl font-bold terminal-text mb-4">SYSTEM CONFIG</h2>
-              <p className="font-mono text-gray-400">Interface parameters loading...</p>
+          <div className="flex-1 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-gray-100 cyber-interface overflow-y-auto">
+            {/* Header */}
+            <div className="border-b-2 border-gray-700 p-6 bg-gradient-to-r from-gray-900 to-gray-800">
+              <h1 className="font-mono text-xl font-bold terminal-text mb-2">
+                SYSTEM CONFIG: &gt;&gt; NEURAL INTERFACE SETTINGS
+              </h1>
+              <p className="font-mono text-sm text-gray-400">
+                &gt; Configure system parameters and notification protocols.
+              </p>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-6 space-y-6">
+              {/* Notification Settings */}
+              <div className="cyber-card p-6">
+                <h2 className="font-mono text-lg font-bold text-gray-200 mb-4 flex items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-gray-600 flex items-center justify-center bg-gray-800 rounded-sm">
+                    🔔
+                  </div>
+                  NOTIFICATION PROTOCOLS
+                </h2>
+                
+                <div className="space-y-4">
+                  {/* Permission Status */}
+                  <div className="flex items-center justify-between p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div>
+                      <div className="font-mono font-bold text-gray-200">SYSTEM STATUS</div>
+                      <div className={`text-sm font-mono mt-1 ${
+                        notificationPermission === 'granted' ? 'status-complete' :
+                        notificationPermission === 'denied' ? 'text-red-400' :
+                        'status-idle'
+                      }`}>
+                        {notificationPermission === 'granted' ? '✓ ACTIVE' :
+                         notificationPermission === 'denied' ? '✗ DENIED' :
+                         '○ STANDBY'}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="data-value text-xl text-gray-200">
+                        {notificationPermission === 'granted' ? 'ONLINE' :
+                         notificationPermission === 'denied' ? 'BLOCKED' :
+                         'OFFLINE'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Control Buttons */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      onClick={requestNotificationPermission}
+                      className={`cyber-button p-4 text-center ${
+                        notificationPermission === 'granted' ? 'active' : ''
+                      }`}
+                      disabled={notificationPermission === 'granted'}
+                    >
+                      <div className="font-mono font-bold text-sm">
+                        {notificationPermission === 'granted' ? '✓ AUTHORIZED' : '⚡ ENABLE ALERTS'}
+                      </div>
+                      <div className="font-mono text-xs text-gray-400 mt-1">
+                        {notificationPermission === 'granted' 
+                          ? 'System neural interface active' 
+                          : 'Activate notification protocols'}
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={testNotification}
+                      className="cyber-button p-4 text-center"
+                      disabled={notificationPermission !== 'granted'}
+                    >
+                      <div className="font-mono font-bold text-sm">🧪 TEST NEURAL LINK</div>
+                      <div className="font-mono text-xs text-gray-400 mt-1">
+                        Verify system communication
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Status Info */}
+                  <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="font-mono text-sm text-gray-300">
+                      <div className="mb-2">
+                        <span className="text-cyan-400">STATUS:</span> Neural interface 
+                        {notificationPermission === 'granted' ? ' synchronized' : ' requires authorization'}
+                      </div>
+                      <div className="mb-2">
+                        <span className="text-cyan-400">PROTOCOL:</span> Browser notification API v2.1
+                      </div>
+                      <div>
+                        <span className="text-cyan-400">SECURITY:</span> Encrypted transmission enabled
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* System Info */}
+              <div className="cyber-card p-6">
+                <h2 className="font-mono text-lg font-bold text-gray-200 mb-4 flex items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-gray-600 flex items-center justify-center bg-gray-800 rounded-sm">
+                    ⚙️
+                  </div>
+                  SYSTEM INFORMATION
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="font-mono text-sm">
+                      <div className="text-cyan-400 mb-1">VERSION</div>
+                      <div className="text-gray-200">Life Tracker v2.1.0</div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="font-mono text-sm">
+                      <div className="text-cyan-400 mb-1">INTERFACE</div>
+                      <div className="text-gray-200">Cyberpunk Neural UI</div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="font-mono text-sm">
+                      <div className="text-cyan-400 mb-1">DATABASE</div>
+                      <div className="text-gray-200">SQLite Optimized</div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="font-mono text-sm">
+                      <div className="text-cyan-400 mb-1">STATUS</div>
+                      <div className="text-green-400">OPERATIONAL</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Status Bar */}
+            <div className="border-t-2 border-gray-700 bg-gradient-to-r from-gray-900 to-gray-800 p-4">
+              <div className="flex justify-between items-center">
+                <div className="font-mono text-sm terminal-text">
+                  CONFIG MODULE - NEURAL SETTINGS v2.1.0
+                </div>
+                <div className="flex space-x-6">
+                  <div className="font-mono text-sm flex items-center gap-2">
+                    <span className={`w-2 h-2 ${notificationPermission === 'granted' ? 'bg-green-500' : 'bg-red-500'} rounded-full animate-pulse`}></span>
+                    <span className={notificationPermission === 'granted' ? 'text-green-400' : 'text-red-400'}>
+                      NOTIFY: {notificationPermission === 'granted' ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <div className="font-mono text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span className="text-blue-400">CONFIG: LOADED</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );
