@@ -123,8 +123,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- 📧 Email: support@lifetracker.app
-- 💬 Discord: [Join our community](https://discord.gg/lifetracker)
+- 📧 Email: luispereiragoncalves03@gmail.com
 - 🐛 Issues: [GitHub Issues](https://github.com/yourusername/life-tracker/issues)
 - 📖 Documentation: [Full Documentation](https://docs.lifetracker.app)
 
