@@ -1,11 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "build/**",
-      "use": "@vercel/static"
-    }
-  ],
+  "buildCommand": "npm run build:client",
+  "outputDirectory": "build",
   "routes": [
     {
       "src": "/(.*)",
@@ -13,7 +9,7 @@
     }
   ],
   "env": {
-    "REACT_APP_API_BASE_URL": "@api_base_url",
+    "REACT_APP_API_BASE_URL": "http://localhost:8000",
     "REACT_APP_ENVIRONMENT": "production"
   }
 }

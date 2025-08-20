@@ -1,0 +1,8 @@
+# Vercel ignore file
+/server
+/database
+/docs
+/tests
+*.log
+.env*
+node_modules
