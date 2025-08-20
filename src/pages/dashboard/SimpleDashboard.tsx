@@ -3,7 +3,7 @@
  * Focused on basic tracking, goals, and notifications
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { 
   fetchDashboardData, 
@@ -11,20 +11,13 @@ import {
   stopTracking
 } from '../../store/slices/activitySlice';
 import { 
-  Play, 
-  Square, 
-  RefreshCw, 
-  Clock, 
   Target, 
-  BarChart3,
   Settings,
-  Bell,
-  TrendingUp
+  Bell
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showErrorToast, handleApiError } from '../../utils/errorHandling';
-import PomodoroTimer from '../../components/timer/PomodoroTimer';
-import { FEATURES, APP_CONFIG } from '../../config/features';
+import { APP_CONFIG } from '../../config/features';
 
 // Categories for tracking
 const categories = [
@@ -42,12 +35,12 @@ interface DailyGoal {
   completed: boolean;
 }
 
-interface DayReport {
-  date: string;
-  totalTime: number;
-  categories: { [key: string]: number };
-  productivity: number;
-}
+// interface DayReport {
+//   date: string;
+//   totalTime: number;
+//   categories: { [key: string]: number };
+//   productivity: number;
+// } // Unused interface
 
 export default function SimpleDashboard() {
   const dispatch = useAppDispatch();
@@ -77,16 +70,7 @@ export default function SimpleDashboard() {
   // Temp state for editing goals
   const [editingGoals, setEditingGoals] = useState<{[key: string]: number}>({});
 
-  // Weekly report (mock data)
-  const [weekReport] = useState<DayReport[]>([
-    { date: '2025-08-18', totalTime: 320, categories: { work: 180, study: 60, exercise: 45, personal: 35 }, productivity: 85 },
-    { date: '2025-08-17', totalTime: 280, categories: { work: 160, study: 70, exercise: 30, personal: 20 }, productivity: 78 },
-    { date: '2025-08-16', totalTime: 350, categories: { work: 200, study: 80, exercise: 40, personal: 30 }, productivity: 92 },
-    { date: '2025-08-15', totalTime: 240, categories: { work: 140, study: 50, exercise: 30, personal: 20 }, productivity: 72 },
-    { date: '2025-08-14', totalTime: 380, categories: { work: 220, study: 90, exercise: 45, personal: 25 }, productivity: 88 },
-    { date: '2025-08-13', totalTime: 290, categories: { work: 170, study: 60, exercise: 35, personal: 25 }, productivity: 80 },
-    { date: '2025-08-12', totalTime: 260, categories: { work: 150, study: 65, exercise: 25, personal: 20 }, productivity: 75 }
-  ]);
+  // Weekly report (mock data) - removed unused
 
   // Load data on mount
   useEffect(() => {
@@ -205,10 +189,7 @@ export default function SimpleDashboard() {
 
   const handleStartTracking = async () => {
     try {
-      await dispatch(startTracking({
-        activity: 'Tracking Automático',
-        category: 'general'
-      })).unwrap();
+      await dispatch(startTracking()).unwrap();
       
       setIsTracking(true);
       setSessionDuration(0);
@@ -223,7 +204,7 @@ export default function SimpleDashboard() {
 
   const handleStopTracking = async () => {
     try {
-      const result = await dispatch(stopTracking()).unwrap();
+      await dispatch(stopTracking()).unwrap();
       setIsTracking(false);
       
       const duration = Math.floor(sessionDuration / 60);
@@ -261,11 +242,7 @@ export default function SimpleDashboard() {
     return `${minutes}m ${secs}s`;
   };
 
-  const formatMinutes = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-  };
+  // formatMinutes function removed - was unused
 
   const todayTotal = dailyGoals.reduce((sum, goal) => sum + goal.currentMinutes, 0);
   const completedGoals = dailyGoals.filter(g => g.completed).length;
@@ -672,7 +649,7 @@ export default function SimpleDashboard() {
                   {dailyGoals.map((goal) => {
                     const category = categories.find(c => c.value === goal.category);
                     const progress = Math.min((goal.currentMinutes / goal.targetMinutes) * 100, 100);
-                    const isRunning = isTracking && goal.category === 'work'; // Mock: assume work is currently running
+                    const isRunning = isTracking; // All categories show as running when tracking is active
                     
                     return (
                       <div key={goal.category} style={{

@@ -55,10 +55,10 @@ export class CategoryManager {
     this.rules = [
       // Development Rules
       {
-        id: 'development-ide',
+        id: 'work-development-ide',
         description: 'IDEs and Development Environments',
         priority: 1,
-        category: CategoryType.DEVELOPMENT,
+        category: CategoryType.WORK,
         appPatterns: ['vscode', 'code', 'webstorm', 'intellij', 'pycharm', 'android studio', 'xcode', 'vim', 'neovim', 'sublime'],
         titlePatterns: ['debugging', 'compiler', 'build', 'deploy'],
         regexPatterns: ['\\.js$', '\\.ts$', '\\.py$', '\\.java$', '\\.cpp$'],
@@ -67,10 +67,10 @@ export class CategoryManager {
         tags: ['coding', 'programming', 'ide']
       },
       {
-        id: 'development-terminal',
+        id: 'work-terminal',
         description: 'Terminal and Command Line',
         priority: 1,
-        category: CategoryType.DEVELOPMENT,
+        category: CategoryType.WORK,
         appPatterns: ['terminal', 'cmd', 'powershell', 'bash', 'git bash', 'windows terminal'],
         titlePatterns: ['git', 'npm', 'docker', 'kubectl', 'ssh'],
         regexPatterns: [],
@@ -79,10 +79,10 @@ export class CategoryManager {
         tags: ['terminal', 'cli', 'devops']
       },
       {
-        id: 'development-browser-dev',
+        id: 'work-browser-dev',
         description: 'Development in Browser',
         priority: 2,
-        category: CategoryType.DEVELOPMENT,
+        category: CategoryType.WORK,
         appPatterns: ['chrome', 'firefox', 'edge', 'safari'],
         titlePatterns: ['github', 'stackoverflow', 'developer tools', 'devtools', 'localhost:', '127.0.0.1'],
         regexPatterns: ['github\\.com', 'stackoverflow\\.com', 'codepen\\.io', 'jsfiddle\\.net'],
@@ -136,12 +136,12 @@ export class CategoryManager {
         tags: ['documents', 'office', 'productivity']
       },
 
-      // Learning Rules
+      // Study Rules
       {
-        id: 'learning-documentation',
+        id: 'study-documentation',
         description: 'Technical Documentation',
         priority: 1,
-        category: CategoryType.LEARNING,
+        category: CategoryType.STUDY,
         appPatterns: ['chrome', 'firefox', 'edge', 'safari'],
         titlePatterns: ['documentation', 'docs', 'api reference', 'tutorial', 'guide', 'manual'],
         regexPatterns: ['docs\\..+', 'documentation', 'tutorial', 'learn'],
@@ -151,10 +151,10 @@ export class CategoryManager {
         tags: ['learning', 'documentation', 'research']
       },
       {
-        id: 'learning-courses',
+        id: 'study-courses',
         description: 'Online Learning Platforms',
         priority: 1,
-        category: CategoryType.LEARNING,
+        category: CategoryType.STUDY,
         appPatterns: ['chrome', 'firefox', 'edge', 'safari'],
         titlePatterns: ['coursera', 'udemy', 'pluralsight', 'codecademy', 'freecodecamp'],
         regexPatterns: [],
@@ -162,6 +162,34 @@ export class CategoryManager {
         productivityScore: 0.90,
         enabled: true,
         tags: ['learning', 'courses', 'education']
+      },
+
+      // Exercise Rules
+      {
+        id: 'exercise-fitness-apps',
+        description: 'Fitness and Health Apps',
+        priority: 1,
+        category: CategoryType.EXERCISE,
+        appPatterns: ['strava', 'nike run club', 'myfitnesspal', 'fitbit', 'apple health', 'garmin connect'],
+        titlePatterns: ['workout', 'fitness', 'exercise', 'running', 'cycling', 'health'],
+        regexPatterns: [],
+        productivityScore: 0.70,
+        enabled: true,
+        tags: ['fitness', 'health', 'exercise']
+      },
+
+      // Personal Rules  
+      {
+        id: 'personal-social-media',
+        description: 'Personal Social Media',
+        priority: 3,
+        category: CategoryType.PERSONAL,
+        appPatterns: ['whatsapp', 'telegram', 'signal'],
+        titlePatterns: ['whatsapp', 'telegram', 'personal'],
+        regexPatterns: [],
+        productivityScore: 0.30,
+        enabled: true,
+        tags: ['personal', 'social', 'messaging']
       },
 
       // Entertainment Rules
@@ -245,7 +273,7 @@ export class CategoryManager {
     }
 
     return {
-      category: CategoryType.UNCATEGORIZED,
+      category: CategoryType.PERSONAL,
       productivityScore: 0.5,
       matchType: 'default',
       confidence: 0.3,
@@ -487,11 +515,11 @@ export class CategoryManager {
 
   private getScoreForCategory(category: CategoryType): number {
     const categoryScores = {
-      [CategoryType.DEVELOPMENT]: 0.90,
-      [CategoryType.WORK]: 0.75,
-      [CategoryType.LEARNING]: 0.85,
-      [CategoryType.ENTERTAINMENT]: 0.25,
-      [CategoryType.UNCATEGORIZED]: 0.50
+      [CategoryType.WORK]: 0.90,
+      [CategoryType.STUDY]: 0.85,
+      [CategoryType.EXERCISE]: 0.70,
+      [CategoryType.PERSONAL]: 0.40,
+      [CategoryType.ENTERTAINMENT]: 0.25
     };
     return categoryScores[category] || 0.50;
   }
@@ -702,35 +730,35 @@ export class CategoryManager {
 
   static getCategoryColor(category: CategoryType): string {
     const colors = {
-      [CategoryType.DEVELOPMENT]: '#4CAF50',
-      [CategoryType.WORK]: '#2196F3', 
-      [CategoryType.LEARNING]: '#FF9800',
-      [CategoryType.ENTERTAINMENT]: '#E91E63',
-      [CategoryType.UNCATEGORIZED]: '#9E9E9E'
+      [CategoryType.WORK]: '#3b82f6',
+      [CategoryType.STUDY]: '#10b981', 
+      [CategoryType.EXERCISE]: '#f59e0b',
+      [CategoryType.PERSONAL]: '#8b5cf6',
+      [CategoryType.ENTERTAINMENT]: '#ef4444'
     };
     return colors[category] || '#9E9E9E';
   }
 
   static getCategoryIcon(category: CategoryType): string {
     const icons = {
-      [CategoryType.DEVELOPMENT]: '💻',
       [CategoryType.WORK]: '💼',
-      [CategoryType.LEARNING]: '📚',
-      [CategoryType.ENTERTAINMENT]: '🎮',
-      [CategoryType.UNCATEGORIZED]: '❓'
+      [CategoryType.STUDY]: '📚',
+      [CategoryType.EXERCISE]: '💪',
+      [CategoryType.PERSONAL]: '👤',
+      [CategoryType.ENTERTAINMENT]: '🎮'
     };
     return icons[category] || '❓';
   }
 
   static getCategoryDescription(category: CategoryType): string {
     const descriptions = {
-      [CategoryType.DEVELOPMENT]: 'Programming, coding, and software development',
-      [CategoryType.WORK]: 'Professional tasks, meetings, and business applications',
-      [CategoryType.LEARNING]: 'Educational content, tutorials, and skill development',
-      [CategoryType.ENTERTAINMENT]: 'Games, videos, music, and leisure activities',
-      [CategoryType.UNCATEGORIZED]: 'Activities that do not fit into other categories'
+      [CategoryType.WORK]: 'Trabalho, desenvolvimento, e atividades profissionais',
+      [CategoryType.STUDY]: 'Estudos, cursos, documentação e aprendizado',
+      [CategoryType.EXERCISE]: 'Exercícios físicos, saúde e bem-estar',
+      [CategoryType.PERSONAL]: 'Atividades pessoais, redes sociais e comunicação',
+      [CategoryType.ENTERTAINMENT]: 'Entretenimento, jogos, vídeos e lazer'
     };
-    return descriptions[category] || 'Unknown category';
+    return descriptions[category] || 'Categoria desconhecida';
   }
 }
 

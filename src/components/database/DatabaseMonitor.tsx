@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Database, Activity, Zap, HardDrive, Clock, Users, 
-  TrendingUp, Settings, Download, RefreshCw, AlertTriangle, CheckCircle 
+  TrendingUp, Download, RefreshCw, AlertTriangle, CheckCircle 
 } from 'lucide-react';
 import { ActivityService } from '../../services/api/ActivityService';
 

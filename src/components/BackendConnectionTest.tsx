@@ -3,7 +3,7 @@
  * Component to test and verify backend connectivity
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { fetchSystemStatus, fetchDashboardData } from '../store/slices/activitySlice';
 
@@ -16,11 +16,7 @@ const BackendConnectionTest: React.FC = () => {
   const dashboardData = useAppSelector(state => state.activity.dashboardData);
   const errors = useAppSelector(state => state.activity.errors);
 
-  useEffect(() => {
-    testConnection();
-  }, []);
-
-  const testConnection = async () => {
+  const testConnection = useCallback(async () => {
     setConnectionStatus('testing');
     setErrorMessage('');
     
@@ -39,7 +35,11 @@ const BackendConnectionTest: React.FC = () => {
       setErrorMessage(error.message || 'Connection failed');
       console.error('❌ Backend connection failed:', error);
     }
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    testConnection();
+  }, [testConnection]);
 
   const getStatusColor = () => {
     switch (connectionStatus) {

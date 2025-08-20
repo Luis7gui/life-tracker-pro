@@ -3,7 +3,7 @@
  * Displays AI-powered suggestions for productivity optimization
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -32,11 +32,7 @@ export default function SmartSuggestions({ currentActivity, className = '' }: Sm
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
   const { success, error } = useNotifications();
 
-  useEffect(() => {
-    loadSuggestions();
-  }, [currentActivity]);
-
-  const loadSuggestions = async () => {
+  const loadSuggestions = useCallback(async () => {
     try {
       setLoading(true);
       const data = await aiService.getSmartSuggestions(currentActivity);
@@ -47,7 +43,11 @@ export default function SmartSuggestions({ currentActivity, className = '' }: Sm
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentActivity, error]);
+
+  useEffect(() => {
+    loadSuggestions();
+  }, [currentActivity, loadSuggestions]);
 
   const handleRefresh = async () => {
     aiService.clearCache();

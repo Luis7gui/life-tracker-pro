@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, Clock, BarChart3, User, Gamepad2, Settings, Power } from 'lucide-react';
+import { Monitor, Clock, BarChart3, User, Settings, Power } from 'lucide-react';
 
 interface CyberSidebarProps {
   activeSection: string;

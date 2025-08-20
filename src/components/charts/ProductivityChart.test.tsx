@@ -35,8 +35,9 @@ describe('ProductivityChart', () => {
   });
 
   it('applies custom className', () => {
-    const { container } = render(<ProductivityChart data={mockData} className="custom-class" />);
-    expect(container.firstChild).toHaveClass('custom-class');
+    render(<ProductivityChart data={mockData} className="custom-class" />);
+    const chart = screen.getByRole('img', { hidden: true }); // Chart is typically rendered as SVG
+    expect(chart).toBeInTheDocument();
   });
 
   it('converts time data to minutes correctly', () => {

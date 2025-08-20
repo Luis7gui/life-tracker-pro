@@ -3,7 +3,7 @@
  * Displays AI-generated insights and patterns
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -31,11 +31,7 @@ export default function AIInsights({ maxInsights = 10, className = '' }: AIInsig
   const [loading, setLoading] = useState(true);
   const { error } = useNotifications();
 
-  useEffect(() => {
-    loadInsights();
-  }, []);
-
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     try {
       setLoading(true);
       const data = await aiService.getInsights();
@@ -46,7 +42,11 @@ export default function AIInsights({ maxInsights = 10, className = '' }: AIInsig
     } finally {
       setLoading(false);
     }
-  };
+  }, [maxInsights, error]);
+
+  useEffect(() => {
+    loadInsights();
+  }, [loadInsights]);
 
   const handleRefresh = async () => {
     aiService.clearCache();

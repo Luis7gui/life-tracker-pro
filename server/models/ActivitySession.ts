@@ -25,11 +25,11 @@ export interface ActivitySessionData {
 }
 
 export enum CategoryType {
-  DEVELOPMENT = 'Development',
-  WORK = 'Work', 
-  LEARNING = 'Learning',
-  ENTERTAINMENT = 'Entertainment',
-  UNCATEGORIZED = 'Uncategorized'
+  WORK = 'work',
+  STUDY = 'study',
+  EXERCISE = 'exercise', 
+  PERSONAL = 'personal',
+  ENTERTAINMENT = 'entertainment'
 }
 
 export class ActivitySession {
@@ -208,14 +208,30 @@ export class ActivitySessionService {
    * Update an existing session
    */
   async update(id: number, updates: Partial<ActivitySessionData>): Promise<ActivitySession | null> {
-    const updatedData = {
-      ...updates,
-      updated_at: new Date()
-    };
+    // Convert camelCase updates to snake_case for database
+    const dbUpdates: any = {};
+    
+    if (updates.startTime !== undefined) dbUpdates.start_time = updates.startTime;
+    if (updates.endTime !== undefined) dbUpdates.end_time = updates.endTime;
+    if (updates.duration !== undefined) dbUpdates.duration_seconds = updates.duration;
+    if (updates.applicationName !== undefined) dbUpdates.application_name = updates.applicationName;
+    if (updates.applicationPath !== undefined) dbUpdates.application_path = updates.applicationPath;
+    if (updates.windowTitle !== undefined) dbUpdates.window_title = updates.windowTitle;
+    if (updates.windowTitleHash !== undefined) dbUpdates.window_title_hash = updates.windowTitleHash;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.productivityScore !== undefined) dbUpdates.productivity_score = updates.productivityScore;
+    if (updates.isIdle !== undefined) dbUpdates.is_idle = updates.isIdle;
+    if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+    if (updates.hostname !== undefined) dbUpdates.hostname = updates.hostname;
+    if (updates.osName !== undefined) dbUpdates.os_name = updates.osName;
+    if (updates.updatedAt !== undefined) dbUpdates.updated_at = updates.updatedAt;
+    
+    // Always update the updated_at timestamp
+    dbUpdates.updated_at = new Date();
 
     await this.db('activity_sessions')
       .where('id', id)
-      .update(updatedData);
+      .update(dbUpdates);
 
     return this.findById(id);
   }
@@ -322,7 +338,7 @@ export class ActivitySessionService {
         totalProductivity += session.productivityScore;
       }
       
-      const category = session.category || CategoryType.UNCATEGORIZED;
+      const category = session.category || CategoryType.PERSONAL;
       categoryBreakdown[category] = (categoryBreakdown[category] || 0) + (session.duration || 0);
     });
 

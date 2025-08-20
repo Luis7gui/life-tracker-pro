@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { 
   fetchDashboardData, 
@@ -20,6 +20,8 @@ const categories = [
   { value: 'personal', label: 'Pessoal', color: '#8b5cf6', targetMinutes: APP_CONFIG.default_goals.personal },
   { value: 'entertainment', label: 'Entretenimento', color: '#ef4444', targetMinutes: APP_CONFIG.default_goals.entertainment }
 ];
+
+// Backend and frontend now use the same categories, no mapping needed
 
 interface DailyGoal {
   category: string;
@@ -43,26 +45,46 @@ export default function CyberpunkDashboard() {
   );
 
   // Daily Goals (can be customized later)
-  const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(
-    categories.map(cat => ({
+  // Load goals from localStorage or use defaults
+  const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(() => {
+    const savedGoals = localStorage.getItem('lifeTracker_dailyGoals');
+    if (savedGoals) {
+      try {
+        return JSON.parse(savedGoals);
+      } catch {
+        console.warn('Failed to parse saved goals, using defaults');
+      }
+    }
+    return categories.map(cat => ({
       category: cat.value,
       targetMinutes: cat.targetMinutes,
-      currentMinutes: Math.floor(Math.random() * cat.targetMinutes), // Mock data
+      currentMinutes: 0, // Start with 0, will be updated from backend
       completed: false
-    }))
-  );
+    }));
+  });
 
   // Edit mode states for goals
   const [editingGoals, setEditingGoals] = useState<{[key: string]: number}>({});
   const [editingApps, setEditingApps] = useState<{[key: string]: string[]}>({});
   
   // Apps associated with each category
-  const [categoryApps, setCategoryApps] = useState<{[key: string]: string[]}>({
-    work: ['Visual Studio Code', 'Slack', 'Microsoft Teams', 'Notion', 'Figma'],
-    study: ['Coursera', 'Khan Academy', 'Duolingo', 'Udemy', 'YouTube'],
-    exercise: ['Strava', 'Nike Run Club', 'MyFitnessPal', 'Fitbit', 'Apple Health'],
-    personal: ['WhatsApp', 'Instagram', 'Facebook', 'Twitter', 'TikTok'],
-    entertainment: ['Netflix', 'Spotify', 'YouTube', 'Steam', 'Twitch']
+  // Category app mappings (load from localStorage or use defaults)
+  const [categoryApps, setCategoryApps] = useState<{[key: string]: string[]}>(() => {
+    const savedApps = localStorage.getItem('lifeTracker_categoryApps');
+    if (savedApps) {
+      try {
+        return JSON.parse(savedApps);
+      } catch {
+        console.warn('Failed to parse saved apps, using defaults');
+      }
+    }
+    return {
+      work: ['Visual Studio Code', 'Slack', 'Microsoft Teams', 'Notion', 'Figma'],
+      study: ['Coursera', 'Khan Academy', 'Duolingo', 'Udemy', 'YouTube'],
+      exercise: ['Strava', 'Nike Run Club', 'MyFitnessPal', 'Fitbit', 'Apple Health'],
+      personal: ['WhatsApp', 'Instagram', 'Facebook', 'Twitter', 'TikTok'],
+      entertainment: ['Netflix', 'Spotify', 'YouTube', 'Steam', 'Twitch']
+    };
   });
 
   // Pomodoro Timer States
@@ -75,17 +97,276 @@ export default function CyberpunkDashboard() {
   const [timerPhase, setTimerPhase] = useState<'focus' | 'break' | 'idle'>('idle');
   const [intensityLevel, setIntensityLevel] = useState<'normal' | 'intense' | 'extreme'>('normal');
 
-  // Timer configurations
-  const timerConfigs = {
+  // Data Analytics States
+  // const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  // const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Generate realistic data for the last 30 days
+  const generateAnalyticsData = () => {
+    const days = 30;
+    const data = [];
+    const today = new Date();
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      
+      // Simulate realistic work patterns
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      const isWorkday = !isWeekend;
+      
+      // Base productivity influenced by day type
+      const baseProductivity = isWorkday ? 0.7 + Math.random() * 0.3 : 0.3 + Math.random() * 0.4;
+      
+      // Generate category data with realistic patterns
+      const workTime = isWorkday ? 180 + Math.random() * 120 : Math.random() * 60;
+      const studyTime = 30 + Math.random() * 90;
+      const exerciseTime = isWorkday ? 20 + Math.random() * 40 : 30 + Math.random() * 60;
+      const personalTime = 45 + Math.random() * 90;
+      const entertainmentTime = isWeekend ? 120 + Math.random() * 180 : 60 + Math.random() * 120;
+      
+      const totalTime = workTime + studyTime + exerciseTime + personalTime + entertainmentTime;
+      
+      data.push({
+        date: date.toISOString().split('T')[0],
+        day: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
+        dayOfWeek: date.getDay(),
+        isWeekend,
+        categories: {
+          work: Math.round(workTime),
+          study: Math.round(studyTime),
+          exercise: Math.round(exerciseTime),
+          personal: Math.round(personalTime),
+          entertainment: Math.round(entertainmentTime)
+        },
+        totalTime: Math.round(totalTime),
+        productivity: Math.round(baseProductivity * 100),
+        focusScore: Math.round((workTime + studyTime) / totalTime * 100),
+        wellnessScore: Math.round((exerciseTime + personalTime) / totalTime * 100),
+        pomodoroSessions: Math.round(workTime / 25) + Math.round(Math.random() * 3),
+        interruptions: Math.round(Math.random() * 8),
+        deepWorkTime: Math.round(workTime * (0.6 + Math.random() * 0.3)),
+        burnoutRisk: Math.round((workTime / 480) * 100) // Risk based on work hours
+      });
+    }
+    
+    return data;
+  };
+
+  const [analyticsData] = useState(() => generateAnalyticsData());
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  
+  // Real-time data from backend (fallback to mock if not available)
+  const getRealTimeData = () => {
+    if (dashboardData) {
+      return {
+        insights: {
+          productivityScore: dashboardData.todaySummary?.productivityScore || 78.5,
+          goalsAchieved: dailyGoals.filter(g => g.completed).length,
+          totalGoals: dailyGoals.length,
+          focusScore: dashboardData.todaySummary?.totalActiveTime ? (dashboardData.todaySummary.totalActiveTime / 60) : 125.8,
+          trendDirection: 'up' as 'up' | 'down' | 'stable',
+          trendPercentage: 12,
+          recommendations: {
+            strengths: [
+              'Consistent daily tracking habits',
+              'High engagement with the system',
+              'Regular goal monitoring'
+            ],
+            improvements: [
+              'Set more challenging targets',
+              'Track additional activities',
+              'Review analytics more frequently'
+            ],
+            actionPlan: 'Your tracking data shows good consistency. Consider expanding to more categories and setting weekly challenges to maintain momentum.'
+          },
+          weeklyStats: {
+            totalHours: dashboardData.todaySummary?.totalActiveTime ? Math.round(dashboardData.todaySummary.totalActiveTime / 3600 * 7) : 42.5,
+            mostProductiveDay: 'Today',
+            averageSessionLength: dashboardData.recentSessions?.sessions?.length ? 
+              Math.round(dashboardData.recentSessions.sessions.reduce((acc, s) => acc + s.duration, 0) / dashboardData.recentSessions.sessions.length / 60) : 85
+          }
+        },
+        categoryData: {
+          work: dailyGoals.find(g => g.category === 'work')?.currentMinutes || 0,
+          study: dailyGoals.find(g => g.category === 'study')?.currentMinutes || 0,
+          exercise: dailyGoals.find(g => g.category === 'exercise')?.currentMinutes || 0,
+          personal: dailyGoals.find(g => g.category === 'personal')?.currentMinutes || 0,
+          entertainment: dailyGoals.find(g => g.category === 'entertainment')?.currentMinutes || 0
+        },
+        weeklyData: dashboardData.timeOfDayAnalysis ? [
+          { day: 'Morning', value: Math.round(dashboardData.timeOfDayAnalysis.morning / 60) },
+          { day: 'Afternoon', value: Math.round(dashboardData.timeOfDayAnalysis.afternoon / 60) },
+          { day: 'Evening', value: Math.round(dashboardData.timeOfDayAnalysis.evening / 60) },
+          { day: 'Night', value: Math.round(dashboardData.timeOfDayAnalysis.night / 60) },
+          { day: 'Today', value: Math.round((dashboardData.todaySummary?.totalActiveTime || 0) / 60) },
+          { day: 'Avg', value: 75 },
+          { day: 'Peak', value: 95 }
+        ] : [
+          { day: 'Mon', value: 85 }, { day: 'Tue', value: 92 }, { day: 'Wed', value: 78 },
+          { day: 'Thu', value: 88 }, { day: 'Fri', value: 95 }, { day: 'Sat', value: 65 }, { day: 'Sun', value: 70 }
+        ]
+      };
+    }
+    
+    // Fallback mock data
+    return {
+      insights: {
+        productivityScore: 78.5,
+        goalsAchieved: 4, totalGoals: 5, focusScore: 125.8,
+        trendDirection: 'up' as 'up' | 'down' | 'stable', trendPercentage: 12,
+        recommendations: {
+          strengths: ['Consistent morning productivity patterns', 'High focus during deep work sessions', 'Good work-break balance'],
+          improvements: ['Reduce afternoon interruptions', 'Optimize meeting scheduling', 'Increase hydration breaks'],
+          actionPlan: 'Based on your patterns, focus your most important tasks between 9-11 AM when your productivity peaks.'
+        },
+        weeklyStats: { totalHours: 42.5, mostProductiveDay: 'Tuesday', averageSessionLength: 85 }
+      },
+      categoryData: { work: 480, study: 180, exercise: 90, personal: 120, entertainment: 60 },
+      weeklyData: [
+        { day: 'Mon', value: 85 }, { day: 'Tue', value: 92 }, { day: 'Wed', value: 78 },
+        { day: 'Thu', value: 88 }, { day: 'Fri', value: 95 }, { day: 'Sat', value: 65 }, { day: 'Sun', value: 70 }
+      ]
+    };
+  };
+
+  const mockData = getRealTimeData();
+
+  // Calculate insights and trends
+  /* 
+  const getAnalyticsInsights = () => {
+    const lastWeek = analyticsData.slice(-7);
+    const previousWeek = analyticsData.slice(-14, -7);
+    
+    const avgProductivity = lastWeek.reduce((sum, day) => sum + day.productivity, 0) / 7;
+    const avgPrevProductivity = previousWeek.reduce((sum, day) => sum + day.productivity, 0) / 7;
+    const productivityTrend = avgProductivity - avgPrevProductivity;
+    
+    const avgFocusScore = lastWeek.reduce((sum, day) => sum + day.focusScore, 0) / 7;
+    const avgBurnoutRisk = lastWeek.reduce((sum, day) => sum + day.burnoutRisk, 0) / 7;
+    
+    const totalPomodoroSessions = lastWeek.reduce((sum, day) => sum + day.pomodoroSessions, 0);
+    const avgInterruptions = lastWeek.reduce((sum, day) => sum + day.interruptions, 0) / 7;
+    
+    // Find best and worst days
+    const bestDay = lastWeek.reduce((best, day) => day.productivity > best.productivity ? day : best);
+    const worstDay = lastWeek.reduce((worst, day) => day.productivity < worst.productivity ? day : worst);
+    
+    // Category analysis
+    const categoryTotals = lastWeek.reduce((totals, day) => {
+      Object.keys(day.categories).forEach(cat => {
+        totals[cat] = (totals[cat] || 0) + (day.categories as Record<string, number>)[cat];
+      });
+      return totals;
+    }, {} as Record<string, number>);
+    
+    return {
+      productivity: {
+        current: Math.round(avgProductivity),
+        trend: Math.round(productivityTrend),
+        isImproving: productivityTrend > 0
+      },
+      focusScore: Math.round(avgFocusScore),
+      burnoutRisk: Math.round(avgBurnoutRisk),
+      pomodoroSessions: totalPomodoroSessions,
+      avgInterruptions: Math.round(avgInterruptions),
+      bestDay: bestDay.day,
+      worstDay: worstDay.day,
+      categoryTotals,
+      weeklyGoalCompletion: Math.round(avgProductivity * 1.2),
+      aiRecommendations: generateAIRecommendations(avgProductivity, avgFocusScore, avgBurnoutRisk, avgInterruptions)
+    };
+  };
+  */
+
+  /* const generateAIRecommendations = (productivity: number, focus: number, burnout: number, interruptions: number) => {
+    const recommendations = [];
+    
+    if (productivity < 60) {
+      recommendations.push({
+        type: 'warning',
+        title: 'PRODUCTIVITY OPTIMIZATION',
+        message: 'Neural efficiency below optimal threshold. Consider implementing time-blocking protocols.',
+        action: 'Increase focus sessions by 25%'
+      });
+    }
+    
+    if (focus < 50) {
+      recommendations.push({
+        type: 'alert',
+        title: 'FOCUS ENHANCEMENT REQUIRED',
+        message: 'Attention spans fragmented. Deploy deep work algorithms immediately.',
+        action: 'Use 45-minute focus blocks'
+      });
+    }
+    
+    if (burnout > 70) {
+      recommendations.push({
+        type: 'critical',
+        title: 'BURNOUT RISK DETECTED',
+        message: 'Neural pathways showing stress signatures. Recovery protocols recommended.',
+        action: 'Reduce work load by 20%'
+      });
+    }
+    
+    if (interruptions > 5) {
+      recommendations.push({
+        type: 'info',
+        title: 'DISTRACTION COUNTERMEASURES',
+        message: 'External interference detected. Activate focus shield protocols.',
+        action: 'Enable do-not-disturb mode'
+      });
+    }
+    
+    if (recommendations.length === 0) {
+      recommendations.push({
+        type: 'success',
+        title: 'OPTIMAL PERFORMANCE',
+        message: 'Neural networks operating at peak efficiency. Maintain current protocols.',
+        action: 'Continue current workflow'
+      });
+    }
+    
+    return recommendations;
+  };
+  */
+
+  // Timer configurations - wrapped in useMemo to prevent useCallback dependency changes
+  const timerConfigs = useMemo(() => ({
     work: { time: 25 * 60, label: 'FOCUS SESSION', emoji: '🎯', color: '#dc2626' },
     shortBreak: { time: 5 * 60, label: 'SHORT BREAK', emoji: '☕', color: '#10b981' },
     longBreak: { time: 15 * 60, label: 'LONG BREAK', emoji: '🌟', color: '#3b82f6' },
     custom: { time: customTime * 60, label: 'CUSTOM MODE', emoji: '⚡', color: '#8b5cf6' }
-  };
+  }), [customTime]);
 
-  // Load data on mount
+  // Load data on mount and check tracking status
   useEffect(() => {
-    dispatch(fetchDashboardData());
+    dispatch(fetchDashboardData()).then((action: any) => {
+      if (action.payload?.monitorStatus) {
+        const monitorStatus = action.payload.monitorStatus;
+        setIsTracking(monitorStatus.isRunning);
+        
+        // If monitor is running, start the session timer from current session duration
+        if (monitorStatus.isRunning && monitorStatus.currentSession) {
+          setSessionDuration(monitorStatus.currentSession.duration || 0);
+        }
+      }
+      
+      // Update daily goals with real session data
+      if (action.payload?.categoryTimes) {
+        const categoryTimes = action.payload.categoryTimes;
+        setDailyGoals(prev => 
+          prev.map(goal => {
+            const categoryTimeInMinutes = Math.floor(((categoryTimes[goal.category] as number) || 0) / 60);
+            return {
+              ...goal,
+              currentMinutes: categoryTimeInMinutes,
+              completed: categoryTimeInMinutes >= goal.targetMinutes
+            };
+          })
+        );
+      }
+    });
   }, [dispatch]);
 
   // Session timer
@@ -122,18 +403,28 @@ export default function CyberpunkDashboard() {
 
   // Timer Functions (defined before useEffect)
   const handleTimerComplete = React.useCallback(() => {
-    toast.success('⏰ Timer Complete!', {
-      description: 'Neural sync completed!'
+    toast.success('⚡ SESSÃO COMPLETA!', {
+      description: 'Sistema neural sincronizado com sucesso!'
     });
+
+    // Send system notification if permitted
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('⚡ SESSÃO COMPLETA', {
+        body: `${timerConfigs[timerMode].label} finalizada! Sistema neural recarregado.`,
+        icon: '/favicon.ico',
+        tag: 'timer-complete',
+        requireInteraction: true
+      });
+    }
 
     // Auto-switch to next phase if enabled
     if (timerMode === 'work') {
       setTotalSessions(prev => prev + 1);
       // Switch to break after work session
-      const nextMode = pomodoroSession % 4 === 0 ? 'longBreak' : 'shortBreak';
+      // const nextMode = pomodoroSession % 4 === 0 ? 'longBreak' : 'shortBreak';
       setPomodoroSession(prev => prev + 1);
     }
-  }, [timerMode, pomodoroSession]);
+  }, [timerMode, timerConfigs]);
 
   // Pomodoro Timer Effect
   useEffect(() => {
@@ -182,15 +473,12 @@ export default function CyberpunkDashboard() {
 
   const handleStartTracking = async () => {
     try {
-      await dispatch(startTracking({
-        activity: 'Tracking Automático',
-        category: 'general'
-      })).unwrap();
+      await dispatch(startTracking()).unwrap();
       
       setIsTracking(true);
       setSessionDuration(0);
-      toast.success('🚀 Tracking Iniciado!', {
-        description: 'Sistema de rastreamento automático ativado'
+      toast.success('🚀 Tracking Contínuo Iniciado!', {
+        description: 'Sistema detectará automaticamente suas atividades e categorizará por aplicação'
       });
       
     } catch (error: any) {
@@ -203,24 +491,47 @@ export default function CyberpunkDashboard() {
       await dispatch(stopTracking()).unwrap();
       setIsTracking(false);
       
-      const duration = Math.floor(sessionDuration / 60);
-      if (duration > 0) {
-        // Update daily goal progress (distributed across categories based on activity detection)
-        const primaryCategory = 'work'; // Default to work category for automatic tracking
-        setDailyGoals(prev => 
-          prev.map(goal => 
-            goal.category === primaryCategory 
-              ? { ...goal, currentMinutes: goal.currentMinutes + duration }
-              : goal
-          )
-        );
-      }
-      
-      toast.success('⏹️ Sessão Finalizada!', {
-        description: `Duração: ${formatDuration(sessionDuration)}`
+      toast.success('⏹️ Tracking Contínuo Interrompido!', {
+        description: 'O sistema categorizou automaticamente suas atividades'
       });
+      
       setSessionDuration(0);
-      dispatch(fetchDashboardData());
+      
+      // Refresh dashboard data to get the latest categorized sessions
+      dispatch(fetchDashboardData()).then((action: any) => {
+        if (action.payload?.categoryTimes) {
+          // Update daily goals based on actual categorized time from sessions
+          const categoryTimes = action.payload.categoryTimes;
+          
+          setDailyGoals(prev => 
+            prev.map(goal => {
+              const categoryTimeInMinutes = Math.floor(((categoryTimes[goal.category] as number) || 0) / 60);
+              return {
+                ...goal,
+                currentMinutes: categoryTimeInMinutes,
+                completed: categoryTimeInMinutes >= goal.targetMinutes
+              };
+            })
+          );
+          
+          // Show breakdown of detected activities
+          const detectedCategories = Object.entries(categoryTimes)
+            .filter(([_, time]) => (time as number) > 60) // Only show categories with more than 1 minute
+            .map(([category, seconds]) => {
+              const minutes = Math.floor((seconds as number) / 60);
+              const categoryData = categories.find(c => c.value === category);
+              return `${categoryData?.label || category}: ${minutes}m`;
+            })
+            .join(', ');
+          
+          if (detectedCategories) {
+            toast.success('📊 Atividades Detectadas!', {
+              description: detectedCategories,
+              duration: 8000
+            });
+          }
+        }
+      });
       
     } catch (error: any) {
       showErrorToast('Erro ao Parar', handleApiError(error));
@@ -269,13 +580,15 @@ export default function CyberpunkDashboard() {
   const updateGoal = (category: string, newTarget: number) => {
     if (newTarget < 0 || newTarget > 720) return; // Max 12 hours
     
-    setDailyGoals(prev => 
-      prev.map(goal => 
-        goal.category === category 
-          ? { ...goal, targetMinutes: newTarget, completed: goal.currentMinutes >= newTarget }
-          : goal
-      )
+    const updatedGoals = dailyGoals.map(goal => 
+      goal.category === category 
+        ? { ...goal, targetMinutes: newTarget, completed: goal.currentMinutes >= newTarget }
+        : goal
     );
+    
+    setDailyGoals(updatedGoals);
+    // Save to localStorage
+    localStorage.setItem('lifeTracker_dailyGoals', JSON.stringify(updatedGoals));
     
     toast.success('🎯 Meta Atualizada!', {
       description: `${categories.find(c => c.value === category)?.label}: ${newTarget} minutos`
@@ -301,10 +614,14 @@ export default function CyberpunkDashboard() {
 
   const addApp = (category: string, appName: string) => {
     if (appName.trim() && !categoryApps[category]?.includes(appName.trim())) {
-      setCategoryApps(prev => ({
-        ...prev,
-        [category]: [...(prev[category] || []), appName.trim()]
-      }));
+      const updatedApps = {
+        ...categoryApps,
+        [category]: [...(categoryApps[category] || []), appName.trim()]
+      };
+      setCategoryApps(updatedApps);
+      // Save to localStorage
+      localStorage.setItem('lifeTracker_categoryApps', JSON.stringify(updatedApps));
+      
       toast.success('📱 App Adicionado!', {
         description: `${appName} → ${categories.find(c => c.value === category)?.label}`
       });
@@ -312,10 +629,14 @@ export default function CyberpunkDashboard() {
   };
 
   const removeApp = (category: string, appName: string) => {
-    setCategoryApps(prev => ({
-      ...prev,
-      [category]: prev[category]?.filter(app => app !== appName) || []
-    }));
+    const updatedApps = {
+      ...categoryApps,
+      [category]: categoryApps[category]?.filter(app => app !== appName) || []
+    };
+    setCategoryApps(updatedApps);
+    // Save to localStorage
+    localStorage.setItem('lifeTracker_categoryApps', JSON.stringify(updatedApps));
+    
     toast.success('🗑️ App Removido!', {
       description: `${appName} removido da categoria`
     });
@@ -451,6 +772,220 @@ export default function CyberpunkDashboard() {
     return ((totalTime - timeLeft) / totalTime) * 100;
   };
 
+  // Data visualization components for charts
+  const renderMiniChart = (data: number[], color: string, label: string) => {
+    const max = Math.max(...data);
+    const height = 60;
+    const width = 200;
+    
+    return (
+      <div className="relative">
+        <div className="text-xs font-mono text-gray-400 mb-2">{label}</div>
+        <svg width={width} height={height} className="overflow-visible">
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
+            <line
+              key={ratio}
+              x1={0}
+              y1={height * ratio}
+              x2={width}
+              y2={height * ratio}
+              stroke="rgba(75, 85, 99, 0.3)"
+              strokeWidth={ratio === 0 || ratio === 1 ? 1 : 0.5}
+            />
+          ))}
+          
+          {/* Data line */}
+          <polyline
+            fill="none"
+            stroke={color}
+            strokeWidth={2}
+            points={data.map((value, index) => 
+              `${(index / (data.length - 1)) * width},${height - (value / max) * height}`
+            ).join(' ')}
+            style={{
+              filter: `drop-shadow(0 0 4px ${color})`
+            }}
+          />
+          
+          {/* Data points */}
+          {data.map((value, index) => (
+            <circle
+              key={index}
+              cx={(index / (data.length - 1)) * width}
+              cy={height - (value / max) * height}
+              r={2}
+              fill={color}
+              className="animate-pulse"
+            />
+          ))}
+        </svg>
+      </div>
+    );
+  };
+
+  const renderProductivityHeatmap = () => {
+    const weekData = analyticsData.slice(-7);
+    const maxProductivity = Math.max(...weekData.map(d => d.productivity));
+    
+    return (
+      <div className="space-y-2">
+        <div className="text-xs font-mono text-gray-400 mb-3">PRODUCTIVITY HEATMAP</div>
+        <div className="grid grid-cols-7 gap-2">
+          {weekData.map((day, index) => {
+            const intensity = day.productivity / maxProductivity;
+            const opacity = 0.3 + (intensity * 0.7);
+            
+            return (
+              <div
+                key={index}
+                className="relative group"
+              >
+                <div
+                  className="w-8 h-8 border border-gray-600 flex items-center justify-center text-xs font-mono cursor-pointer transition-all hover:scale-110"
+                  style={{
+                    backgroundColor: `rgba(220, 38, 38, ${opacity})`,
+                    boxShadow: intensity > 0.7 ? '0 0 8px rgba(220, 38, 38, 0.5)' : 'none'
+                  }}
+                >
+                  {day.day}
+                </div>
+                
+                {/* Tooltip */}
+                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 border border-gray-600 p-2 text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap">
+                  <div className="text-cyan-400">{day.day}</div>
+                  <div>Prod: {day.productivity}%</div>
+                  <div>Focus: {day.focusScore}%</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        <div className="flex items-center justify-between text-xs font-mono text-gray-500 mt-2">
+          <span>Low</span>
+          <span>Productivity</span>
+          <span>High</span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderCategoryDistribution = () => {
+    const categoryTotals = mockData.categoryData;
+    const total = Object.values(categoryTotals).reduce((sum, value) => sum + value, 0);
+    
+    const categoryColors = {
+      work: '#dc2626',
+      study: '#10b981',
+      exercise: '#f59e0b',
+      personal: '#8b5cf6',
+      entertainment: '#ef4444'
+    };
+    
+    let currentAngle = 0;
+    const radius = 50;
+    const centerX = 60;
+    const centerY = 60;
+    
+    return (
+      <div className="flex items-center gap-6">
+        <div className="relative">
+          <svg width={120} height={120}>
+            {/* Background circle */}
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={radius}
+              fill="none"
+              stroke="rgba(75, 85, 99, 0.3)"
+              strokeWidth={2}
+            />
+            
+            {/* Category segments */}
+            {Object.entries(categoryTotals).map(([category, value]) => {
+              const percentage = (value as number) / total;
+              const angle = percentage * 360;
+              const startAngle = currentAngle;
+              const endAngle = currentAngle + angle;
+              
+              const startX = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
+              const startY = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
+              const endX = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
+              const endY = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
+              
+              const largeArcFlag = angle > 180 ? 1 : 0;
+              
+              const pathData = [
+                `M ${centerX} ${centerY}`,
+                `L ${startX} ${startY}`,
+                `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+                'Z'
+              ].join(' ');
+              
+              currentAngle += angle;
+              
+              return (
+                <path
+                  key={category}
+                  d={pathData}
+                  fill={categoryColors[category as keyof typeof categoryColors]}
+                  stroke="rgba(0, 0, 0, 0.5)"
+                  strokeWidth={1}
+                  opacity={0.8}
+                  style={{
+                    filter: `drop-shadow(0 0 4px ${categoryColors[category as keyof typeof categoryColors]})`
+                  }}
+                />
+              );
+            })}
+            
+            {/* Center circle */}
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={20}
+              fill="rgba(0, 0, 0, 0.8)"
+              stroke="rgba(75, 85, 99, 0.5)"
+              strokeWidth={2}
+            />
+            
+            <text
+              x={centerX}
+              y={centerY + 4}
+              textAnchor="middle"
+              className="fill-gray-200 text-xs font-mono"
+            >
+              {Math.round(total/60)}h
+            </text>
+          </svg>
+        </div>
+        
+        <div className="space-y-2">
+          {Object.entries(categoryTotals).map(([category, value]) => {
+            const percentage = Math.round(((value as number) / total) * 100);
+            const categoryData = categories.find(c => c.value === category);
+            
+            return (
+              <div key={category} className="flex items-center gap-3">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: categoryColors[category as keyof typeof categoryColors] }}
+                ></div>
+                <div className="font-mono text-xs text-gray-200 min-w-[80px]">
+                  {categoryData?.label}
+                </div>
+                <div className="font-mono text-xs text-gray-400">
+                  {Math.round((value as number)/60)}h ({percentage}%)
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const renderMainContent = () => {
     switch (activeSection) {
       case 'dashboard':
@@ -561,9 +1096,9 @@ export default function CyberpunkDashboard() {
                               {category?.label.toUpperCase()}
                             </div>
                             <div className={`text-sm font-mono font-bold ${
-                              goal.completed ? 'status-complete' : 'status-idle'
+                              goal.completed ? 'status-complete' : isTracking ? 'status-active' : 'status-idle'
                             }`}>
-                              {goal.completed ? '✓ TARGET ACHIEVED' : '○ IN PROGRESS'}
+                              {goal.completed ? '✓ TARGET ACHIEVED' : isTracking ? '● RUNNING' : '○ STANDBY'}
                             </div>
                           </div>
                         </div>
@@ -1064,10 +1599,193 @@ export default function CyberpunkDashboard() {
         );
       case 'data':
         return (
-          <div className="flex-1 bg-black text-white cyber-interface p-4">
-            <div className="cyber-panel p-6 text-center">
-              <h2 className="font-mono text-xl font-bold terminal-text mb-4">DATA ARCHIVE</h2>
-              <p className="font-mono text-gray-400">Accessing neural memory banks...</p>
+          <div className="flex-1 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-gray-100 cyber-interface overflow-y-auto">
+            {/* Header */}
+            <div className="border-b-2 border-gray-700 p-6 bg-gradient-to-r from-gray-900 to-gray-800">
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <h1 className="font-mono text-xl font-bold terminal-text mb-2">
+                    DATA ANALYTICS: &gt;&gt; NEURAL PATTERN ANALYSIS
+                  </h1>
+                  <p className="font-mono text-sm text-gray-400">
+                    &gt; Analyzing behavioral patterns and productivity metrics.<br/>
+                    &gt; AI-powered insights engine active.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono text-sm text-gray-400 mb-3">
+                    ANALYSIS: COMPLETE
+                  </div>
+                  <button 
+                    onClick={() => setAnalyticsPeriod(analyticsPeriod === 'daily' ? 'weekly' : 
+                                                     analyticsPeriod === 'weekly' ? 'monthly' : 'daily')}
+                    className="cyber-button text-xs"
+                  >
+                    <span className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
+                      {analyticsPeriod.toUpperCase()} VIEW
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-6 space-y-6">
+              {/* Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 text-blue-400">📊</div>
+                    <div className="text-xs font-mono text-gray-400">PRODUCTIVITY</div>
+                  </div>
+                  <div className="data-value text-3xl mb-1 text-blue-400">
+                    {Math.round(mockData.insights.productivityScore)}%
+                  </div>
+                  <div className="text-sm text-gray-400 font-mono">EFFICIENCY</div>
+                </div>
+                
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 text-green-400">🎯</div>
+                    <div className="text-xs font-mono text-gray-400">GOALS</div>
+                  </div>
+                  <div className="data-value text-3xl mb-1 text-green-400">
+                    {mockData.insights.goalsAchieved}/{mockData.insights.totalGoals}
+                  </div>
+                  <div className="text-sm text-gray-400 font-mono">ACHIEVED</div>
+                </div>
+
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 text-purple-400">⚡</div>
+                    <div className="text-xs font-mono text-gray-400">FOCUS</div>
+                  </div>
+                  <div className="data-value text-3xl mb-1 text-purple-400">
+                    {Math.round(mockData.insights.focusScore)}
+                  </div>
+                  <div className="text-sm text-gray-400 font-mono">MINUTES</div>
+                </div>
+
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-6 h-6 text-red-400">📈</div>
+                    <div className="text-xs font-mono text-gray-400">TREND</div>
+                  </div>
+                  <div className={`data-value text-3xl mb-1 ${
+                    mockData.insights.trendDirection === 'up' ? 'text-green-400' : 
+                    mockData.insights.trendDirection === 'down' ? 'text-red-400' : 'text-yellow-400'
+                  }`}>
+                    {mockData.insights.trendDirection === 'up' ? '↗' : 
+                     mockData.insights.trendDirection === 'down' ? '↘' : '→'}
+                  </div>
+                  <div className="text-sm text-gray-400 font-mono">{mockData.insights.trendPercentage}%</div>
+                </div>
+              </div>
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Weekly Activity Chart */}
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-mono text-lg font-bold text-gray-200">WEEKLY PATTERN</h3>
+                    <div className="text-xs font-mono text-gray-400">LAST 7 DAYS</div>
+                  </div>
+                  {renderMiniChart(mockData.weeklyData.map(d => d.value), '#3b82f6', 'Weekly Productivity')}
+                </div>
+
+                {/* Category Distribution */}
+                <div className="cyber-card p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-mono text-lg font-bold text-gray-200">CATEGORY BREAKDOWN</h3>
+                    <div className="text-xs font-mono text-gray-400">CURRENT PERIOD</div>
+                  </div>
+                  {renderCategoryDistribution()}
+                </div>
+              </div>
+
+              {/* Productivity Heatmap */}
+              <div className="cyber-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-mono text-lg font-bold text-gray-200">PRODUCTIVITY HEATMAP</h3>
+                  <div className="text-xs font-mono text-gray-400">30 DAYS</div>
+                </div>
+                {renderProductivityHeatmap()}
+              </div>
+
+              {/* AI Recommendations */}
+              <div className="cyber-card p-6 border-2 border-cyan-500/30">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-mono text-lg font-bold text-cyan-400">🤖 AI INSIGHTS</h3>
+                  <div className="text-xs font-mono text-gray-400">NEURAL ANALYSIS</div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                      <div className="font-mono text-sm font-bold text-green-400 mb-2">✓ STRENGTHS</div>
+                      <ul className="space-y-1">
+                        {mockData.insights.recommendations.strengths.map((strength, i) => (
+                          <li key={i} className="font-mono text-xs text-gray-300 flex items-start gap-2">
+                            <span className="text-green-400 mt-1">•</span>
+                            {strength}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="p-4 bg-gray-900 border border-gray-700 rounded">
+                      <div className="font-mono text-sm font-bold text-yellow-400 mb-2">⚠ IMPROVEMENTS</div>
+                      <ul className="space-y-1">
+                        {mockData.insights.recommendations.improvements.map((improvement, i) => (
+                          <li key={i} className="font-mono text-xs text-gray-300 flex items-start gap-2">
+                            <span className="text-yellow-400 mt-1">•</span>
+                            {improvement}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border border-cyan-700/50 rounded">
+                    <div className="font-mono text-sm font-bold text-cyan-400 mb-2">🎯 PERSONALIZED ACTION PLAN</div>
+                    <div className="font-mono text-xs text-gray-300 leading-relaxed">
+                      {mockData.insights.recommendations.actionPlan}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Weekly Summary */}
+              <div className="cyber-card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-mono text-lg font-bold text-gray-200">WEEKLY PERFORMANCE</h3>
+                  <div className="text-xs font-mono text-gray-400">SUMMARY</div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="data-value text-2xl text-blue-400 mb-2">
+                      {Math.round(mockData.insights.weeklyStats.totalHours)}h
+                    </div>
+                    <div className="font-mono text-sm text-gray-400">TOTAL TIME</div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="data-value text-2xl text-green-400 mb-2">
+                      {mockData.insights.weeklyStats.mostProductiveDay}
+                    </div>
+                    <div className="font-mono text-sm text-gray-400">BEST DAY</div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-gray-900 border border-gray-700 rounded">
+                    <div className="data-value text-2xl text-purple-400 mb-2">
+                      {mockData.insights.weeklyStats.averageSessionLength}m
+                    </div>
+                    <div className="font-mono text-sm text-gray-400">AVG SESSION</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         );

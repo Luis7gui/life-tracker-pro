@@ -6,6 +6,9 @@
       "Bash(npm run dev:*)"
     ],
     "deny": [],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\d C:\\Users\\luisg\\Desktop\\projetos\\vibe-coder\\main-projects"
+    ]
   }
 }

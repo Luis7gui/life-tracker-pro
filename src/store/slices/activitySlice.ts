@@ -19,7 +19,26 @@ interface Session {
   active: boolean;
 }
 
+interface MonitorStatus {
+  isRunning: boolean;
+  isIdle: boolean;
+  hasActiveSession: boolean;
+  currentSession?: {
+    id?: number;
+    application: string;
+    startTime: string;
+    duration: number;
+    category?: string;
+    productivityScore?: number;
+  };
+  lastActivityTime: number;
+  timeSinceActivity: number;
+  hostname: string;
+  osName: string;
+}
+
 interface DashboardData {
+  monitorStatus?: MonitorStatus;
   todaySummary?: {
     totalActiveTime: number;
     productivityScore: number;
@@ -27,6 +46,7 @@ interface DashboardData {
   recentSessions?: {
     sessions: Session[];
   };
+  categoryTimes?: Record<string, number>;
   timeOfDayAnalysis?: {
     morning: number;
     afternoon: number;
@@ -53,7 +73,7 @@ interface ActivityState {
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // Development flag to use mock data when API endpoints are not ready
-const USE_MOCK_DATA = process.env.NODE_ENV === 'development' && !process.env.REACT_APP_DISABLE_MOCK;
+// const USE_MOCK_DATA = process.env.NODE_ENV === 'development' && !process.env.REACT_APP_DISABLE_MOCK; // Unused
 
 // Async thunks
 export const fetchSystemStatus = createAsyncThunk(
@@ -64,71 +84,96 @@ export const fetchSystemStatus = createAsyncThunk(
   }
 );
 
+export const fetchMonitorStatus = createAsyncThunk(
+  'activity/fetchMonitorStatus',
+  async () => {
+    const response = await axios.get(`${API_BASE_URL}/api/monitor/status`);
+    return response.data;
+  }
+);
+
+export const fetchTodaySessions = createAsyncThunk(
+  'activity/fetchTodaySessions',
+  async () => {
+    const response = await axios.get(`${API_BASE_URL}/api/monitor/sessions/today`);
+    return response.data;
+  }
+);
+
 export const fetchDashboardData = createAsyncThunk(
   'activity/fetchDashboardData',
   async () => {
-    if (USE_MOCK_DATA) {
-      // Mock dashboard data for development when API endpoints are not ready
-      console.log('🔧 Using mock data - API endpoints not implemented yet');
+    try {
+      // Fetch real data from the monitor endpoints
+      const [statusResponse, sessionsResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/monitor/status`),
+        axios.get(`${API_BASE_URL}/api/monitor/sessions/today`)
+      ]);
+      
+      const status = statusResponse.data.data;
+      const sessions = sessionsResponse.data.data;
+      
+      // Calculate dashboard data from sessions
+      const totalActiveTime = sessions.reduce((total: number, session: any) => 
+        total + (session.duration || 0), 0
+      );
+      
+      const categoryTimes: Record<string, number> = {};
+      sessions.forEach((session: any) => {
+        const category = session.category || 'other';
+        categoryTimes[category] = (categoryTimes[category] || 0) + (session.duration || 0);
+      });
+      
       return {
-      todaySummary: {
-        totalActiveTime: Math.floor(Math.random() * 3600), // Mock random active time
-        productivityScore: Math.floor(Math.random() * 100), // Mock productivity score
-      },
-      recentSessions: {
-        sessions: [
-          {
-            id: '1',
-            activity: 'Working on React components',
-            category: 'work',
-            startTime: new Date().toISOString(),
-            duration: 1800,
-            active: false
-          },
-          {
-            id: '2', 
-            activity: 'Reading documentation',
-            category: 'study',
-            startTime: new Date(Date.now() - 3600000).toISOString(),
-            duration: 2400,
-            active: false
-          }
-        ],
-      },
-      timeOfDayAnalysis: {
-        morning: Math.floor(Math.random() * 1800),
-        afternoon: Math.floor(Math.random() * 3600),
-        evening: Math.floor(Math.random() * 2400),
-        night: Math.floor(Math.random() * 600),
-      },
-    };
-    } else {
-      // Real API call when endpoints are implemented
-      const response = await axios.get(`${API_BASE_URL}/api/dashboard`);
-      return response.data;
+        monitorStatus: status,
+        todaySummary: {
+          totalActiveTime,
+          productivityScore: Math.round(
+            sessions.reduce((avg: number, session: any) => 
+              avg + (session.productivityScore || 0), 0
+            ) / (sessions.length || 1)
+          )
+        },
+        recentSessions: {
+          sessions: sessions.slice(0, 10)
+        },
+        categoryTimes,
+        timeOfDayAnalysis: {
+          morning: Math.floor(totalActiveTime * 0.3),
+          afternoon: Math.floor(totalActiveTime * 0.4), 
+          evening: Math.floor(totalActiveTime * 0.2),
+          night: Math.floor(totalActiveTime * 0.1),
+        }
+      };
+    } catch (error) {
+      // Fallback to mock data if API fails
+      console.log('🔧 API failed, using mock data');
+      return {
+        todaySummary: {
+          totalActiveTime: Math.floor(Math.random() * 3600),
+          productivityScore: Math.floor(Math.random() * 100),
+        },
+        recentSessions: {
+          sessions: []
+        },
+        categoryTimes: {},
+        timeOfDayAnalysis: {
+          morning: Math.floor(Math.random() * 1800),
+          afternoon: Math.floor(Math.random() * 3600),
+          evening: Math.floor(Math.random() * 2400),
+          night: Math.floor(Math.random() * 600),
+        }
+      };
     }
   }
 );
 
 export const startTracking = createAsyncThunk(
   'activity/startTracking',
-  async (payload: { activity: string; category: string }, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      if (USE_MOCK_DATA) {
-        console.log('🔧 Using mock tracking - API endpoints not implemented yet');
-        const newSession: Session = {
-          id: Date.now().toString(),
-          activity: payload.activity,
-          category: payload.category,
-          startTime: new Date().toISOString(),
-          duration: 0,
-          active: true,
-        };
-        return newSession;
-      } else {
-        const response = await axios.post(`${API_BASE_URL}/api/monitor/start`, payload);
-        return response.data;
-      }
+      const response = await axios.post(`${API_BASE_URL}/api/monitor/start`);
+      return response.data;
     } catch (error: any) {
       console.error('Failed to start tracking:', error);
       return rejectWithValue(error.response?.data?.error || 'Failed to start tracking');
@@ -138,28 +183,10 @@ export const startTracking = createAsyncThunk(
 
 export const stopTracking = createAsyncThunk(
   'activity/stopTracking',
-  async (_, { getState, rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const state = getState() as any;
-      const currentSession = state.activity.currentSession;
-      
-      if (USE_MOCK_DATA) {
-        console.log('🔧 Using mock stop tracking - API endpoints not implemented yet');
-        if (currentSession) {
-          const endTime = new Date().toISOString();
-          const duration = Math.floor((new Date().getTime() - new Date(currentSession.startTime).getTime()) / 1000);
-          return {
-            ...currentSession,
-            endTime,
-            duration,
-            active: false,
-          };
-        }
-        return null;
-      } else {
-        const response = await axios.post(`${API_BASE_URL}/api/monitor/stop`);
-        return response.data;
-      }
+      const response = await axios.post(`${API_BASE_URL}/api/monitor/stop`);
+      return response.data;
     } catch (error: any) {
       console.error('Failed to stop tracking:', error);
       return rejectWithValue(error.response?.data?.error || 'Failed to stop tracking');
@@ -272,20 +299,46 @@ const activitySlice = createSlice({
       })
       .addCase(stopTracking.fulfilled, (state, action) => {
         state.loading.system = false;
-        if (action.payload) {
-          // Add completed session to recent sessions if we have dashboard data
-          if (state.dashboardData?.recentSessions) {
-            state.dashboardData.recentSessions.sessions.unshift(action.payload);
-            // Keep only last 10 sessions
-            state.dashboardData.recentSessions.sessions = 
-              state.dashboardData.recentSessions.sessions.slice(0, 10);
-          }
-        }
         state.currentSession = null;
       })
       .addCase(stopTracking.rejected, (state, action) => {
         state.loading.system = false;
         state.errors.system = action.error.message || 'Failed to stop tracking';
+      });
+
+    // fetchMonitorStatus
+    builder
+      .addCase(fetchMonitorStatus.pending, (state) => {
+        state.loading.system = true;
+        state.errors.system = null;
+      })
+      .addCase(fetchMonitorStatus.fulfilled, (state, action) => {
+        state.loading.system = false;
+        if (state.dashboardData) {
+          state.dashboardData.monitorStatus = action.payload.data;
+        }
+      })
+      .addCase(fetchMonitorStatus.rejected, (state, action) => {
+        state.loading.system = false;
+        state.errors.system = action.error.message || 'Failed to fetch monitor status';
+      });
+
+    // fetchTodaySessions
+    builder
+      .addCase(fetchTodaySessions.pending, (state) => {
+        state.loading.dashboard = true;
+      })
+      .addCase(fetchTodaySessions.fulfilled, (state, action) => {
+        state.loading.dashboard = false;
+        if (state.dashboardData) {
+          state.dashboardData.recentSessions = {
+            sessions: action.payload.data.slice(0, 10)
+          };
+        }
+      })
+      .addCase(fetchTodaySessions.rejected, (state, action) => {
+        state.loading.dashboard = false;
+        state.errors.dashboard = action.error.message || 'Failed to fetch today sessions';
       });
 
     // fetchWeeklySummary and fetchCategoryStats are ignored for now

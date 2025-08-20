@@ -3,7 +3,7 @@
  * Smart category prediction for activities
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -45,17 +45,7 @@ export default function AutoCategorization({
     setInputActivity(activity || '');
   }, [activity]);
 
-  useEffect(() => {
-    if (autoPredict && inputActivity && inputActivity !== lastPredictedActivity && inputActivity.length > 3) {
-      const debounceTimer = setTimeout(() => {
-        handlePredict();
-      }, 500);
-      
-      return () => clearTimeout(debounceTimer);
-    }
-  }, [inputActivity, autoPredict, lastPredictedActivity]);
-
-  const handlePredict = async () => {
+  const handlePredict = useCallback(async () => {
     if (!inputActivity.trim()) {
       error('Please enter an activity description');
       return;
@@ -80,7 +70,17 @@ export default function AutoCategorization({
     } finally {
       setLoading(false);
     }
-  };
+  }, [inputActivity, error, success, onCategoryPredict]);
+
+  useEffect(() => {
+    if (autoPredict && inputActivity && inputActivity !== lastPredictedActivity && inputActivity.length > 3) {
+      const debounceTimer = setTimeout(() => {
+        handlePredict();
+      }, 500);
+      
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [inputActivity, autoPredict, lastPredictedActivity, handlePredict]);
 
   const handleInputChange = (value: string) => {
     setInputActivity(value);

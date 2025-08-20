@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, Search, Filter, Edit3, Trash2, ToggleLeft, ToggleRight, 
-  Target, Brain, Download, Upload, TestTube, Settings
+  TestTube
 } from 'lucide-react';
 import { ActivityService } from '../../services/api/ActivityService';
 

@@ -498,10 +498,10 @@ export class ActivityService {
     startDate: string,
     endDate: string
   ): Promise<ActivitySession[]> {
-    const stats = await this.getProductivityStats('custom', {
-      start: startDate,
-      end: endDate,
-    });
+    // const stats = await this.getProductivityStats('custom', {
+    //   start: startDate,
+    //   end: endDate,
+    // }); // Unused variable
 
     // The backend doesn't have a direct endpoint for sessions by date range,
     // so we'll use the recent sessions endpoint as a fallback

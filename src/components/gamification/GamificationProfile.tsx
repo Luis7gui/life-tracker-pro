@@ -8,7 +8,7 @@ import { gamificationService, UserGamificationProfile } from '../../services/api
 import { gamificationNotifications } from '../../services/notifications/GamificationNotifications';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
-import { Badge } from '../ui/badge';
+// import { Badge } from '../ui/badge'; // Unused
 import { Button } from '../ui/button';
 
 interface GamificationProfileProps {

@@ -3,14 +3,13 @@
  * Displays AI service status and statistics
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { 
   Brain, 
   Activity, 
-  Database, 
   TrendingUp,
   RefreshCw,
   CheckCircle,
@@ -32,11 +31,7 @@ export default function AIStatus({ showDetails = false, className = '' }: AIStat
   const [retraining, setRetraining] = useState(false);
   const { success, error } = useNotifications();
 
-  useEffect(() => {
-    loadStatus();
-  }, []);
-
-  const loadStatus = async () => {
+  const loadStatus = useCallback(async () => {
     try {
       setLoading(true);
       const data = await aiService.getStatus();
@@ -47,7 +42,11 @@ export default function AIStatus({ showDetails = false, className = '' }: AIStat
     } finally {
       setLoading(false);
     }
-  };
+  }, [error]);
+
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
 
   const handleRefresh = async () => {
     aiService.clearCache();

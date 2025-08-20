@@ -13,8 +13,6 @@ import {
   Download, 
   FileText, 
   BarChart3, 
-  Calendar,
-  Settings,
   CheckCircle,
   AlertCircle,
   Clock

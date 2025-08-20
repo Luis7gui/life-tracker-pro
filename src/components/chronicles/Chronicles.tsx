@@ -19,8 +19,8 @@ import {
   Check,
   Lock
 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
+// import { Button } from '../ui/button'; // Unused
+// import { Card } from '../ui/card'; // Unused
 
 interface Achievement {
   id: string;

@@ -174,12 +174,9 @@ export default function MysticDashboard() {
   const loadEnhancedData = async () => {
     try {
       // Use the enhanced ActivityService methods
-      const [dashboardData, overview] = await Promise.all([
+      const [dashboardData] = await Promise.all([
         import('../../services/api/ActivityService').then(service => 
           service.ActivityService.getDashboardData()
-        ),
-        import('../../services/api/ActivityService').then(service => 
-          service.ActivityService.getSystemOverview()
         )
       ]);
       
@@ -192,10 +189,7 @@ export default function MysticDashboard() {
   const handleStartTracking = async () => {
     try {
       // Start automatic tracking without requiring category or description
-      await dispatch(startTracking({
-        activity: 'Automatic Activity Tracking',
-        category: 'general' // Default category for automatic tracking
-      })).unwrap();
+      await dispatch(startTracking()).unwrap();
       
       setIsTracking(true);
       setSessionDuration(0);

@@ -3,7 +3,7 @@
  * Displays AI-powered productivity predictions and insights
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -45,11 +45,7 @@ export default function ProductivityInsights({
   const [loading, setLoading] = useState(true);
   const { error } = useNotifications();
 
-  useEffect(() => {
-    loadInsights();
-  }, [selectedCategory]);
-
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     try {
       setLoading(true);
       const [predictionData, optimalData] = await Promise.all([
@@ -65,7 +61,11 @@ export default function ProductivityInsights({
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, error]);
+
+  useEffect(() => {
+    loadInsights();
+  }, [selectedCategory, loadInsights]);
 
   const handleRefresh = async () => {
     aiService.clearCache();
